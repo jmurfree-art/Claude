@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, ShieldAlert, Sparkles } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Check, Loader2, Save, ShieldAlert, Sparkles } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
   LANGUAGES,
   MAX_SCRIPT_LENGTH,
 } from "@/lib/constants";
+import { deleteDraft, getDraft, saveDraft } from "@/lib/offline/drafts";
 import { cn } from "@/lib/utils";
 import type { AspectRatio, Avatar, Voice } from "@/lib/video-providers/types";
 
@@ -29,6 +30,8 @@ interface CatalogState {
 
 export function CreateVideoForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftParam = searchParams.get("draft");
 
   const [catalog, setCatalog] = React.useState<CatalogState>({
     avatars: [],
@@ -48,6 +51,41 @@ export function CreateVideoForm() {
 
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+
+  const [draftId, setDraftId] = React.useState<string | null>(null);
+  const [draftSaved, setDraftSaved] = React.useState(false);
+
+  // Resume a locally stored draft (?draft=<id>) — works fully offline.
+  React.useEffect(() => {
+    if (!draftParam) return;
+    void getDraft(draftParam).then((draft) => {
+      if (!draft) return;
+      setDraftId(draft.id);
+      setTitle(draft.title);
+      setScript(draft.script);
+      setLanguage(draft.language);
+      if (draft.avatarId) setAvatarId(draft.avatarId);
+      if (draft.voiceId) setVoiceId(draft.voiceId);
+      setBackgroundId(draft.backgroundId);
+      setAspectRatio(draft.aspectRatio);
+    });
+  }, [draftParam]);
+
+  async function handleSaveDraft() {
+    const saved = await saveDraft({
+      id: draftId ?? undefined,
+      title,
+      script,
+      language,
+      avatarId,
+      voiceId,
+      backgroundId,
+      aspectRatio,
+    });
+    setDraftId(saved.id);
+    setDraftSaved(true);
+    window.setTimeout(() => setDraftSaved(false), 2500);
+  }
 
   React.useEffect(() => {
     let cancelled = false;
@@ -141,6 +179,8 @@ export function CreateVideoForm() {
       if (!res.ok || !body.projectId) {
         throw new Error(body.error ?? "Video generation failed to start.");
       }
+      // The render is queued — the local draft has served its purpose.
+      if (draftId) void deleteDraft(draftId);
       router.push(`/projects/${body.projectId}`);
     } catch (err) {
       setSubmitError(
@@ -150,18 +190,19 @@ export function CreateVideoForm() {
     }
   }
 
-  if (catalog.error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>Provider unavailable</AlertTitle>
-        <AlertDescription>{catalog.error}</AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">
+        {catalog.error && (
+          <Alert variant="warning">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Provider unavailable</AlertTitle>
+            <AlertDescription>
+              {catalog.error} You can still write your script and save it as a
+              local draft — generate once you&apos;re back online.
+            </AlertDescription>
+          </Alert>
+        )}
         {/* Script */}
         <Card>
           <CardHeader>
@@ -208,6 +249,10 @@ export function CreateVideoForm() {
                   <Skeleton key={i} className="aspect-square rounded-lg" />
                 ))}
               </div>
+            ) : catalog.error ? (
+              <p className="text-sm text-muted-foreground">
+                Avatars can&apos;t be loaded right now — reconnect to pick one.
+              </p>
             ) : (
               <div className="grid max-h-80 grid-cols-3 gap-3 overflow-y-auto sm:grid-cols-4 md:grid-cols-6">
                 {catalog.avatars.map((avatar) => (
@@ -378,6 +423,26 @@ export function CreateVideoForm() {
                 <AlertDescription>{submitError}</AlertDescription>
               </Alert>
             )}
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleSaveDraft}
+              disabled={!title.trim() && !script.trim()}
+            >
+              {draftSaved ? (
+                <>
+                  <Check />
+                  Saved on this device
+                </>
+              ) : (
+                <>
+                  <Save />
+                  Save draft (works offline)
+                </>
+              )}
+            </Button>
 
             <Button type="submit" className="w-full" size="lg" disabled={!canSubmit}>
               {submitting ? (

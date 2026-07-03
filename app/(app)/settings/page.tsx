@@ -116,9 +116,17 @@ export default async function SettingsPage() {
           </div>
           {isMockMode() && (
             <p className="text-muted-foreground">
-              Mock mode is active because no provider is configured. Set{" "}
-              <code className="rounded bg-muted px-1">HEYGEN_API_KEY</code> in
-              your environment to render real videos.
+              Mock mode simulates renders. Set{" "}
+              <code className="rounded bg-muted px-1">VIDEO_PROVIDER=local</code>{" "}
+              for free real renders (needs ffmpeg), or{" "}
+              <code className="rounded bg-muted px-1">HEYGEN_API_KEY</code> for
+              HeyGen.
+            </p>
+          )}
+          {provider.name === "local" && (
+            <p className="text-muted-foreground">
+              Free local rendering: Microsoft Edge neural voices + ffmpeg. No
+              API key or subscription required.
             </p>
           )}
         </CardContent>

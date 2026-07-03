@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Plus, VideoOff } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ProjectCard } from "@/components/project-card";
+import { DashboardProjects } from "@/components/dashboard-projects";
 import { createClient } from "@/lib/supabase/server";
 import type { Project } from "@/types/database";
 
@@ -24,9 +23,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">Your videos</h1>
           <p className="text-sm text-muted-foreground">
-            {list.length === 0
-              ? "Nothing here yet — create your first video."
-              : `${list.length} project${list.length === 1 ? "" : "s"}`}
+            Renders and local drafts — available offline too.
           </p>
         </div>
         <Button asChild>
@@ -37,27 +34,7 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      {list.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <VideoOff className="h-10 w-10 text-muted-foreground" />
-            <p className="font-medium">No videos yet</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              Write a script, pick an avatar and voice, and your first render
-              will show up here with live status.
-            </p>
-            <Button asChild className="mt-2">
-              <Link href="/create">Create a video</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {list.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      )}
+      <DashboardProjects initialProjects={list} />
     </div>
   );
 }

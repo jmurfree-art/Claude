@@ -137,14 +137,38 @@ interface VideoProvider {
 
 | Provider | File | Status |
 | --- | --- | --- |
+| **Local (free)** | `lib/video-providers/local.ts` | ✅ Real MP4s with no API key or subscription — see below |
 | **HeyGen** | `lib/video-providers/heygen.ts` | ✅ v2 avatars/voices/generate + v1 status polling |
 | **Mock** | `lib/video-providers/mock.ts` | ✅ Simulated pipeline for development |
 | **Duix-Avatar** | `lib/video-providers/duix.ts` | 🧪 Experimental self-hosted option |
 
 Selection happens in `lib/video-providers/index.ts`: `VIDEO_PROVIDER` env var
-wins; otherwise HeyGen when `HEYGEN_API_KEY` is set; otherwise mock. Adding a
-new vendor = one new class + one registry entry. The rest of the app never
-changes.
+wins; otherwise HeyGen when `HEYGEN_API_KEY` is set; **otherwise the free
+local provider**. Adding a new vendor = one new class + one registry entry.
+The rest of the app never changes.
+
+### Free renders without HeyGen (the default)
+
+No paid subscription is needed to produce real videos. The `local` provider
+renders MP4s entirely with free components:
+
+- **Voice**: Microsoft Edge's neural text-to-speech (the same voices as
+  Edge's Read Aloud) via the keyless `msedge-tts` package — 16 voices across
+  all supported languages.
+- **Avatar**: free DiceBear illustrated avatars (fetched at render time; if
+  unreachable, the render proceeds with just the background + voice).
+- **Compositing**: `ffmpeg` — background color + centered avatar + audio
+  track at the chosen aspect ratio.
+
+Requirements: `ffmpeg` on the machine (`sudo apt install ffmpeg` /
+`brew install ffmpeg`; or set `FFMPEG_PATH`). Rendered files land in
+`.local-renders/` (override with `LOCAL_RENDER_DIR`) and are served,
+auth-gated, from `/api/local-video/:id`.
+
+Notes: Edge TTS is an unofficial endpoint — fine for personal use, but for
+commercial scale switch to a paid TTS or HeyGen. The result is a static
+presenter (no lip-sync); for true talking-head animation use HeyGen or
+self-hosted Duix-Avatar.
 
 ### Self-hosted option: Duix-Avatar (experimental)
 
@@ -214,6 +238,26 @@ carries `plan`, `stripe_customer_id`, `stripe_subscription_id`, and
   impersonation language before any provider call.
 - **Moderation placeholder**: the gate is intentionally pluggable — swap in a
   real moderation API before scaling.
+
+## Offline dashboard (PWA)
+
+AvatarStudio is an installable Progressive Web App, and the dashboard stays
+manageable without a connection:
+
+- **Service worker** (`public/sw.js`): app shell + visited pages are cached
+  (network-first), static assets cache-first, with an `/offline` fallback.
+  API responses are never cached.
+- **Local project mirror**: the dashboard mirrors your project list into
+  IndexedDB (`lib/offline/projects-cache.ts`). Offline, it renders the
+  mirrored copy with a "locally saved" notice.
+- **Offline drafts** (`lib/offline/drafts.ts`): write scripts and configure
+  videos with no connection — "Save draft (works offline)" stores them on
+  the device; they appear in a Drafts section on the dashboard and can be
+  resumed via `/create?draft=<id>`. Generating a video (which needs the
+  server) deletes the local draft.
+- **Install it**: in Chrome/Edge use "Install app" from the address bar;
+  it launches standalone straight into the dashboard
+  (`public/manifest.webmanifest`).
 
 ## Roadmap
 

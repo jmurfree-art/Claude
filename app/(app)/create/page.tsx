@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { CreateVideoForm } from "@/components/create-video-form";
 
@@ -12,7 +13,10 @@ export default function CreatePage() {
           Script in, MP4 out. Configure your presenter and press generate.
         </p>
       </div>
-      <CreateVideoForm />
+      {/* Suspense: the form reads ?draft=<id> via useSearchParams */}
+      <Suspense>
+        <CreateVideoForm />
+      </Suspense>
     </div>
   );
 }

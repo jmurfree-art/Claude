@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppNav } from "@/components/app-nav";
+import { OfflineBanner } from "@/components/offline-banner";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -17,6 +18,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-screen">
+      <OfflineBanner />
       <AppNav email={user.email ?? ""} />
       <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
