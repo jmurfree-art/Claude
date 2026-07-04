@@ -90,6 +90,21 @@ alter table public.projects add column if not exists audio_url text;
 alter table public.projects add column if not exists source_avatar_url text;
 alter table public.projects add column if not exists lipsynced_video_url text;
 
+-- Avatar-engine pipeline columns (open-source animation engines).
+alter table public.projects add column if not exists avatar_engine_id text;
+alter table public.projects add column if not exists avatar_engine_mode text;
+alter table public.projects add column if not exists avatar_engine_job_id text;
+alter table public.projects add column if not exists avatar_engine_status text
+  check (avatar_engine_status is null
+         or avatar_engine_status in ('queued', 'processing', 'completed', 'failed'));
+alter table public.projects add column if not exists avatar_engine_progress integer;
+alter table public.projects add column if not exists source_audio_url text;
+alter table public.projects add column if not exists source_avatar_image_url text;
+alter table public.projects add column if not exists source_video_url text;
+alter table public.projects add column if not exists animated_video_url text;
+alter table public.projects add column if not exists engine_metadata jsonb;
+alter table public.projects add column if not exists consent_confirmed boolean not null default false;
+
 create index if not exists projects_user_id_created_at_idx
   on public.projects (user_id, created_at desc);
 
@@ -129,6 +144,50 @@ $$;
 drop trigger if exists projects_set_updated_at on public.projects;
 create trigger projects_set_updated_at
   before update on public.projects
+  for each row execute function public.set_updated_at();
+
+-- ------------------------------------------------------------
+-- avatar_engine_jobs: audit/history of every engine job.
+-- ------------------------------------------------------------
+create table if not exists public.avatar_engine_jobs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  project_id uuid not null references public.projects (id) on delete cascade,
+  engine_id text not null,
+  job_id text,
+  status text not null default 'queued'
+    check (status in ('queued', 'processing', 'completed', 'failed')),
+  progress integer,
+  input jsonb,
+  output jsonb,
+  error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists avatar_engine_jobs_project_idx
+  on public.avatar_engine_jobs (project_id, created_at desc);
+
+alter table public.avatar_engine_jobs enable row level security;
+
+drop policy if exists "Users can view own engine jobs" on public.avatar_engine_jobs;
+create policy "Users can view own engine jobs"
+  on public.avatar_engine_jobs for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own engine jobs" on public.avatar_engine_jobs;
+create policy "Users can insert own engine jobs"
+  on public.avatar_engine_jobs for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own engine jobs" on public.avatar_engine_jobs;
+create policy "Users can update own engine jobs"
+  on public.avatar_engine_jobs for update
+  using (auth.uid() = user_id);
+
+drop trigger if exists avatar_engine_jobs_set_updated_at on public.avatar_engine_jobs;
+create trigger avatar_engine_jobs_set_updated_at
+  before update on public.avatar_engine_jobs
   for each row execute function public.set_updated_at();
 
 -- ------------------------------------------------------------

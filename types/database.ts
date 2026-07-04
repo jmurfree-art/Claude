@@ -29,6 +29,32 @@ export type Project = {
   audio_url: string | null;
   source_avatar_url: string | null;
   lipsynced_video_url: string | null;
+  avatar_engine_id: string | null;
+  avatar_engine_mode: string | null;
+  avatar_engine_job_id: string | null;
+  avatar_engine_status: "queued" | "processing" | "completed" | "failed" | null;
+  avatar_engine_progress: number | null;
+  source_audio_url: string | null;
+  source_avatar_image_url: string | null;
+  source_video_url: string | null;
+  animated_video_url: string | null;
+  engine_metadata: Record<string, unknown> | null;
+  consent_confirmed: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AvatarEngineJobRow = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  engine_id: string;
+  job_id: string | null;
+  status: "queued" | "processing" | "completed" | "failed";
+  progress: number | null;
+  input: Record<string, unknown> | null;
+  output: Record<string, unknown> | null;
+  error: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -70,6 +96,13 @@ export interface Database {
         Insert: Omit<Profile, "created_at"> &
           Partial<Pick<Profile, "created_at">>;
         Update: Partial<Profile>;
+        Relationships: [];
+      };
+      avatar_engine_jobs: {
+        Row: AvatarEngineJobRow;
+        Insert: Partial<AvatarEngineJobRow> &
+          Pick<AvatarEngineJobRow, "user_id" | "project_id" | "engine_id" | "status">;
+        Update: Partial<AvatarEngineJobRow>;
         Relationships: [];
       };
     };

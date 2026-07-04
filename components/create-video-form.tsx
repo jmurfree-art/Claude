@@ -17,6 +17,11 @@ import {
   LANGUAGES,
   MAX_SCRIPT_LENGTH,
 } from "@/lib/constants";
+import {
+  AvatarEnginePanel,
+  INITIAL_AVATAR_ENGINE_STATE,
+  type AvatarEngineState,
+} from "@/components/avatar-engine-panel";
 import { deleteDraft, getDraft, saveDraft } from "@/lib/offline/drafts";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -75,7 +80,13 @@ export function CreateVideoForm() {
   const [uploading, setUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
   const [likenessConsent, setLikenessConsent] = React.useState(false);
-  const lipsyncEnabled = lipsyncEngine !== "off";
+
+  // Avatar-engine pipeline (open-source animation engines).
+  const [engineState, setEngineState] = React.useState<AvatarEngineState>(
+    INITIAL_AVATAR_ENGINE_STATE
+  );
+  const engineActive = engineState.engine !== "off";
+  const lipsyncEnabled = !engineActive && lipsyncEngine !== "off";
 
   async function handleSourceUpload(file: File) {
     setUploading(true);
@@ -190,15 +201,16 @@ export function CreateVideoForm() {
 
   const canSubmit =
     !submitting &&
-    !catalog.loading &&
     !uploading &&
     script.trim().length > 0 &&
     script.length <= MAX_SCRIPT_LENGTH &&
-    avatarId !== "" &&
-    voiceId !== "" &&
     consent &&
+    // Avatar-engine jobs don't use the provider avatar/voice catalog.
+    (engineActive || (!catalog.loading && avatarId !== "" && voiceId !== "")) &&
     // Lip-sync requires explicit likeness permission.
-    (!lipsyncEnabled || likenessConsent);
+    (!lipsyncEnabled || likenessConsent) &&
+    // Avatar engines require the media/likeness consent in their panel.
+    (!engineActive || engineState.consent);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -211,6 +223,37 @@ export function CreateVideoForm() {
     const voice = catalog.voices.find((v) => v.id === voiceId);
 
     try {
+      // Avatar-engine pipeline: one call creates the project + engine job.
+      if (engineActive) {
+        const res = await fetch("/api/avatar-engine/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title.trim() || "Untitled avatar video",
+            script: script.trim(),
+            language,
+            aspectRatio,
+            engine: engineState.engine,
+            mode: engineState.mode,
+            avatarImageUrl: engineState.avatarImageUrl,
+            sourceVideoUrl: engineState.sourceVideoUrl,
+            audioUrl: engineState.audioUrl,
+            emotion: engineState.emotion,
+            motionIntensity: engineState.motionIntensity,
+            consent: engineState.consent,
+          }),
+        });
+        const body = (await res.json()) as {
+          projectId?: string;
+          error?: string;
+        };
+        if (!res.ok || !body.projectId) {
+          throw new Error(body.error ?? "Avatar engine job failed to start.");
+        }
+        if (draftId) void deleteDraft(draftId);
+        router.push(`/projects/${body.projectId}`);
+        return;
+      }
       const res = await fetch("/api/videos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -471,7 +514,11 @@ export function CreateVideoForm() {
           </CardContent>
         </Card>
 
+        {/* Avatar engine (open-source animation) */}
+        <AvatarEnginePanel value={engineState} onChange={setEngineState} />
+
         {/* Lip sync */}
+        {!engineActive && (
         <Card>
           <CardHeader>
             <CardTitle>Lip sync</CardTitle>
@@ -561,6 +608,7 @@ export function CreateVideoForm() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Consent + submit */}
         <Card>

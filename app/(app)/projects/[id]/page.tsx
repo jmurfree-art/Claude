@@ -36,7 +36,8 @@ export default async function ProjectPage({
   if (!data) notFound();
   const project = data as Project;
 
-  const isLipSync = Boolean(project.lipsync_job_id);
+  const isAvatarEngine = Boolean(project.avatar_engine_job_id);
+  const isLipSync = !isAvatarEngine && Boolean(project.lipsync_job_id);
   // A "lipsync" project without a job means the job never started.
   const lipsyncNeverStarted =
     project.provider === "lipsync" && !project.lipsync_job_id;
@@ -47,11 +48,23 @@ export default async function ProjectPage({
     ["Language", LANGUAGE_LABELS[project.language] ?? project.language],
     ["Aspect ratio", project.aspect_ratio],
     ["Provider", project.provider],
+    ...(project.avatar_engine_id
+      ? ([
+          ["Engine", project.avatar_engine_id],
+          ["Engine mode", project.avatar_engine_mode ?? "auto"],
+        ] as [string, string][])
+      : []),
     ...(project.lipsync_provider
       ? ([["Lip sync", project.lipsync_provider]] as [string, string][])
       : []),
     ["Created", formatDate(project.created_at)],
   ];
+
+  const hasSources = Boolean(
+    project.source_avatar_image_url ||
+      project.source_video_url ||
+      project.source_audio_url
+  );
 
   return (
     <div className="space-y-6">
@@ -79,15 +92,73 @@ export default async function ProjectPage({
         <VideoStatusPoller
           projectId={project.id}
           initialStatus={
-            isLipSync ? project.lipsync_status ?? project.status : project.status
+            isAvatarEngine
+              ? project.avatar_engine_status === "queued"
+                ? "pending"
+                : project.avatar_engine_status ?? project.status
+              : isLipSync
+                ? project.lipsync_status ?? project.status
+                : project.status
           }
-          initialVideoUrl={project.lipsynced_video_url ?? project.final_video_url}
+          initialVideoUrl={
+            project.animated_video_url ??
+            project.lipsynced_video_url ??
+            project.final_video_url
+          }
           initialError={project.error_message}
           aspectRatio={project.aspect_ratio}
           statusEndpoint={
-            isLipSync ? `/api/lipsync/status/${project.id}` : undefined
+            isAvatarEngine
+              ? `/api/avatar-engine/status/${project.id}`
+              : isLipSync
+                ? `/api/lipsync/status/${project.id}`
+                : undefined
           }
         />
+      )}
+
+      {hasSources && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Sources</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-start gap-6">
+            {project.source_avatar_image_url && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Avatar image
+                </p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={project.source_avatar_image_url}
+                  alt="Source avatar"
+                  className="h-32 w-32 rounded-lg border object-cover"
+                />
+              </div>
+            )}
+            {project.source_video_url && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Source video
+                </p>
+                <video
+                  src={project.source_video_url}
+                  controls
+                  playsInline
+                  className="h-32 rounded-lg border"
+                />
+              </div>
+            )}
+            {project.source_audio_url && (
+              <div className="min-w-64 space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Audio
+                </p>
+                <audio src={project.source_audio_url} controls className="w-full" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">

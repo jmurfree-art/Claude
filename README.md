@@ -296,6 +296,58 @@ lip-sync generation.
 If you added lip-sync to an existing database, re-run `supabase/schema.sql`
 — the new project columns are added idempotently.
 
+## Open-source avatar animation engines
+
+`lib/avatar-engines/` adds a modular animation layer around five
+open-source engines. The Next.js app **orchestrates jobs only** — model
+inference runs in external microservices you deploy (local Docker or remote
+GPU), all speaking one contract:
+
+```
+POST {API_URL}/jobs          → { "jobId": "...", "status": "queued" }
+GET  {API_URL}/jobs/{jobId}  → { "jobId", "status", "progress", "outputVideoUrl", "error", "metadata" }
+```
+
+| Engine | Best for | Needs | Repo |
+| --- | --- | --- | --- |
+| **LatentSync** | Highest-quality lip-sync | audio + image or video | [bytedance/LatentSync](https://github.com/bytedance/LatentSync) |
+| **EchoMimic** | Expressive portrait motion | audio + portrait image | [antgroup/echomimic](https://github.com/antgroup/echomimic) |
+| **MuseTalk** | Fast preview / realtime lip-sync | audio + image or video | [TMElyralab/MuseTalk](https://github.com/TMElyralab/MuseTalk) |
+| **LivePortrait** | Portrait animation (driving video) | portrait image | [KwaiVGI/LivePortrait](https://github.com/KwaiVGI/LivePortrait) |
+| **VideoReTalking** | Re-dub an existing talking video | audio + source video | [OpenTalker/video-retalking](https://github.com/OpenTalker/video-retalking) |
+
+**Auto routing** (`engine-router.ts`): source video → VideoReTalking;
+expressive still image → EchoMimic; fast preview → MuseTalk; highest
+quality → LatentSync; portrait-only → LivePortrait. Auto prefers engines
+whose endpoint is configured and falls back to the **mock engine** —
+every engine also runs *simulated* jobs (queued → processing with progress
+→ completed) whenever its `*_API_URL` is unset, so the entire flow works
+end-to-end with no GPUs or keys.
+
+**Local Docker pattern** (per engine): clone the repo, wrap its inference
+in the jobs contract behind a small FastAPI/Flask server, run it in a CUDA
+container (`docker run --gpus all -p 910X:8000 ...`), then set
+`ENGINE_API_URL=http://127.0.0.1:910X`. **Remote GPU pattern**: deploy the
+same container to RunPod/Modal/a GPU VM and set `ENGINE_API_URL=https://…`
+plus `ENGINE_API_KEY` (sent as a Bearer token). Each provider file has a
+TODO block with specifics.
+
+**Flow**: the create page's Avatar Engine section (engine mode + engine +
+uploads + emotion + motion intensity) → `POST /api/avatar-engine/create`
+(validates the likeness-consent checkbox server-side, generates speech
+audio from the script with free Edge TTS when none is uploaded, validates
+per-engine media requirements) → job records in `avatar_engine_jobs` +
+pipeline state on the project → the project page polls
+`GET /api/avatar-engine/status/:projectId` showing a live progress bar,
+source previews (image/video/audio), and the final MP4 with download.
+`POST /api/avatar-engine/cancel` stops polling; `GET
+/api/avatar-engine/engines` lists engines + configured state.
+
+> Safety: engine jobs require the consent checkbox — *"I confirm I have
+> permission to use this person's face, voice, likeness, and uploaded
+> media."* — enforced in the UI **and** the API. Impersonation language is
+> blocked by the moderation gate before any job is created.
+
 ## Offline dashboard (PWA)
 
 AvatarStudio is an installable Progressive Web App, and the dashboard stays

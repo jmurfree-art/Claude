@@ -9,7 +9,8 @@ import { STATUS_POLL_INTERVAL_MS } from "@/lib/constants";
 import type { ProjectStatus } from "@/types/database";
 
 interface StatusResponse {
-  status: ProjectStatus;
+  status: ProjectStatus | "queued";
+  progress?: number | null;
   finalVideoUrl: string | null;
   errorMessage: string | null;
 }
@@ -36,6 +37,7 @@ export function VideoStatusPoller({
 }) {
   const router = useRouter();
   const [status, setStatus] = React.useState<ProjectStatus>(initialStatus);
+  const [progress, setProgress] = React.useState<number | null>(null);
   const [videoUrl, setVideoUrl] = React.useState(initialVideoUrl);
   const [error, setError] = React.useState(initialError);
 
@@ -52,7 +54,9 @@ export function VideoStatusPoller({
         if (!res.ok) return; // transient — keep polling
         const body = (await res.json()) as StatusResponse;
         if (cancelled) return;
-        setStatus(body.status);
+        // Avatar-engine jobs report "queued"; treat it as pending.
+        setStatus(body.status === "queued" ? "pending" : body.status);
+        setProgress(typeof body.progress === "number" ? body.progress : null);
         setVideoUrl(body.finalVideoUrl);
         setError(body.errorMessage);
         if (body.status === "completed" || body.status === "failed") {
@@ -121,6 +125,19 @@ export function VideoStatusPoller({
       <p className="text-sm font-medium">
         {status === "pending" ? "Queued for rendering…" : "Rendering your video…"}
       </p>
+      {progress !== null && (
+        <div className="w-2/3 max-w-xs space-y-1">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all"
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+            />
+          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            {Math.round(progress)}%
+          </p>
+        </div>
+      )}
       <p className="px-6 text-center text-xs text-muted-foreground">
         This usually takes a few minutes. You can leave this page — the video
         keeps rendering and will appear in your dashboard.
