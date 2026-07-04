@@ -79,6 +79,17 @@ create table if not exists public.projects (
   updated_at timestamptz not null default now()
 );
 
+-- Lip-sync pipeline columns (idempotent so existing databases upgrade
+-- by re-running this file).
+alter table public.projects add column if not exists lipsync_provider text;
+alter table public.projects add column if not exists lipsync_job_id text;
+alter table public.projects add column if not exists lipsync_status text
+  check (lipsync_status is null
+         or lipsync_status in ('pending', 'processing', 'completed', 'failed'));
+alter table public.projects add column if not exists audio_url text;
+alter table public.projects add column if not exists source_avatar_url text;
+alter table public.projects add column if not exists lipsynced_video_url text;
+
 create index if not exists projects_user_id_created_at_idx
   on public.projects (user_id, created_at desc);
 

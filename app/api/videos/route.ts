@@ -16,6 +16,12 @@ const createVideoSchema = z.object({
   language: z.string().min(2).max(10),
   aspectRatio: z.enum(["16:9", "9:16", "1:1"]),
   backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  /**
+   * When true the project is created for the lip-sync pipeline: no standard
+   * provider render is started — the client follows up with
+   * POST /api/lipsync/create for this project.
+   */
+  lipsync: z.boolean().default(false),
   consent: z.literal(true, {
     errorMap: () => ({
       message: "You must confirm you have rights and consent for this content.",
@@ -48,25 +54,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: moderation.reason }, { status: 422 });
   }
 
-  const provider = getVideoProvider();
+  let providerName: string;
+  let providerVideoId: string | null = null;
 
-  let providerVideoId: string;
-  try {
-    ({ providerVideoId } = await provider.createVideo({
-      title: input.title,
-      script: input.script,
-      avatarId: input.avatarId,
-      voiceId: input.voiceId,
-      backgroundColor: input.backgroundColor,
-      aspectRatio: input.aspectRatio,
-    }));
-  } catch (err) {
-    console.error("createVideo failed:", err);
-    const message =
-      err instanceof VideoProviderError
-        ? err.message
-        : "The video provider rejected the request.";
-    return NextResponse.json({ error: message }, { status: 502 });
+  if (input.lipsync) {
+    // Lip-sync pipeline: the render job is created by /api/lipsync/create.
+    providerName = "lipsync";
+  } else {
+    const provider = getVideoProvider();
+    providerName = provider.name;
+    try {
+      ({ providerVideoId } = await provider.createVideo({
+        title: input.title,
+        script: input.script,
+        avatarId: input.avatarId,
+        voiceId: input.voiceId,
+        backgroundColor: input.backgroundColor,
+        aspectRatio: input.aspectRatio,
+      }));
+    } catch (err) {
+      console.error("createVideo failed:", err);
+      const message =
+        err instanceof VideoProviderError
+          ? err.message
+          : "The video provider rejected the request.";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
   }
 
   const { data: project, error: dbError } = await supabase
@@ -83,7 +96,7 @@ export async function POST(request: Request) {
       aspect_ratio: input.aspectRatio,
       background_color: input.backgroundColor,
       status: "pending",
-      provider: provider.name,
+      provider: providerName,
       provider_video_id: providerVideoId,
       final_video_url: null,
       thumbnail_url: null,

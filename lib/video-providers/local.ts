@@ -2,15 +2,12 @@ import "server-only";
 
 import { execFile as execFileCallback } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { createWriteStream } from "node:fs";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
-
 import { ASPECT_RATIO_DIMENSIONS } from "@/lib/constants";
+import { synthesizeSpeechToBuffer } from "@/lib/tts";
 import {
   VideoProviderError,
   type Avatar,
@@ -351,33 +348,8 @@ export class LocalProvider implements VideoProvider {
     script: string,
     outPath: string
   ): Promise<void> {
-    // Honor HTTPS_PROXY for the TTS WebSocket (ws ignores proxy env vars).
-    const proxyUrl = process.env.HTTPS_PROXY ?? process.env.https_proxy;
-    const tts = new MsEdgeTTS(
-      proxyUrl ? { agent: new HttpsProxyAgent(proxyUrl) } : undefined
-    );
-    try {
-      await tts.setMetadata(voiceId, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
-      const { audioStream } = tts.toStream(this.escapeSsmlText(script));
-
-      await new Promise<void>((resolve, reject) => {
-        const fileStream = createWriteStream(outPath);
-        audioStream.once("error", reject);
-        fileStream.once("error", reject);
-        fileStream.once("finish", () => resolve());
-        audioStream.pipe(fileStream);
-      });
-    } finally {
-      tts.close();
-    }
-  }
-
-  /** Escapes characters that would otherwise break the library's SSML template. */
-  private escapeSsmlText(text: string): string {
-    return text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    const audio = await synthesizeSpeechToBuffer(voiceId, script);
+    await writeFile(outPath, audio);
   }
 
   /**

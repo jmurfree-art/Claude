@@ -24,12 +24,15 @@ export function VideoStatusPoller({
   initialVideoUrl,
   initialError,
   aspectRatio,
+  statusEndpoint,
 }: {
   projectId: string;
   initialStatus: ProjectStatus;
   initialVideoUrl: string | null;
   initialError: string | null;
   aspectRatio: string;
+  /** Override for lip-sync jobs; defaults to the standard render endpoint. */
+  statusEndpoint?: string;
 }) {
   const router = useRouter();
   const [status, setStatus] = React.useState<ProjectStatus>(initialStatus);
@@ -42,9 +45,10 @@ export function VideoStatusPoller({
     if (isTerminal) return;
 
     let cancelled = false;
+    const endpoint = statusEndpoint ?? `/api/videos/${projectId}/status`;
     const timer = setInterval(async () => {
       try {
-        const res = await fetch(`/api/videos/${projectId}/status`);
+        const res = await fetch(endpoint);
         if (!res.ok) return; // transient — keep polling
         const body = (await res.json()) as StatusResponse;
         if (cancelled) return;
@@ -64,7 +68,7 @@ export function VideoStatusPoller({
       cancelled = true;
       clearInterval(timer);
     };
-  }, [projectId, isTerminal, router]);
+  }, [projectId, isTerminal, router, statusEndpoint]);
 
   const aspectClass =
     aspectRatio === "9:16"

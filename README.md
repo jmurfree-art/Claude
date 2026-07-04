@@ -239,6 +239,38 @@ carries `plan`, `stripe_customer_id`, `stripe_subscription_id`, and
 - **Moderation placeholder**: the gate is intentionally pluggable — swap in a
   real moderation API before scaling.
 
+## Lip-sync pipeline
+
+Beyond static-presenter renders, AvatarStudio has a provider-based lip-sync
+layer (`lib/lipsync/`) that animates a face to match the generated voice:
+
+1. On the create page, pick a **Lip Sync Engine** (Auto / HeyGen / Replicate /
+   fal MuseTalk / Mock), optionally toggle **"Use source video instead of
+   still avatar"**, and upload a face image or talking-head clip (stored in
+   the Supabase `videos` bucket).
+2. Generation first ensures speech audio exists — synthesized with the free
+   Edge TTS from your script and stored publicly so providers can fetch it —
+   then `POST /api/lipsync/create` starts the provider job.
+3. The project page polls `GET /api/lipsync/status/:projectId` until the
+   lip-synced MP4 is ready; the URL is saved to the project
+   (`lipsynced_video_url`) and shown with preview + download.
+
+| Engine | Needs | Face source |
+| --- | --- | --- |
+| HeyGen | `HEYGEN_API_KEY` | Uploaded photo (talking photo) or stock avatar |
+| Replicate | `REPLICATE_API_TOKEN` + `REPLICATE_LIPSYNC_VERSION` (a Wav2Lip-style model version hash) | Image or video |
+| fal MuseTalk | `FAL_KEY` | Source video only |
+| Mock | nothing | any (simulated) |
+
+"Auto" picks the first configured engine in that order, falling back to the
+mock engine so the whole flow is testable with zero keys. A dedicated
+consent checkbox — *"I have permission to use this person's image, voice,
+and likeness."* — is required (client- and server-enforced) before any
+lip-sync generation.
+
+If you added lip-sync to an existing database, re-run `supabase/schema.sql`
+— the new project columns are added idempotently.
+
 ## Offline dashboard (PWA)
 
 AvatarStudio is an installable Progressive Web App, and the dashboard stays

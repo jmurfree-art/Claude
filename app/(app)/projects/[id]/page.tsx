@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -35,12 +36,20 @@ export default async function ProjectPage({
   if (!data) notFound();
   const project = data as Project;
 
+  const isLipSync = Boolean(project.lipsync_job_id);
+  // A "lipsync" project without a job means the job never started.
+  const lipsyncNeverStarted =
+    project.provider === "lipsync" && !project.lipsync_job_id;
+
   const details: [string, string][] = [
     ["Avatar", project.avatar_name ?? project.avatar_id],
     ["Voice", project.voice_name ?? project.voice_id],
     ["Language", LANGUAGE_LABELS[project.language] ?? project.language],
     ["Aspect ratio", project.aspect_ratio],
     ["Provider", project.provider],
+    ...(project.lipsync_provider
+      ? ([["Lip sync", project.lipsync_provider]] as [string, string][])
+      : []),
     ["Created", formatDate(project.created_at)],
   ];
 
@@ -58,13 +67,28 @@ export default async function ProjectPage({
         <StatusBadge status={project.status} />
       </div>
 
-      <VideoStatusPoller
-        projectId={project.id}
-        initialStatus={project.status}
-        initialVideoUrl={project.final_video_url}
-        initialError={project.error_message}
-        aspectRatio={project.aspect_ratio}
-      />
+      {lipsyncNeverStarted ? (
+        <Alert variant="destructive">
+          <AlertTitle>Lip-sync job never started</AlertTitle>
+          <AlertDescription>
+            This project was created for the lip-sync pipeline but no job was
+            registered. Create a new video and try again.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <VideoStatusPoller
+          projectId={project.id}
+          initialStatus={
+            isLipSync ? project.lipsync_status ?? project.status : project.status
+          }
+          initialVideoUrl={project.lipsynced_video_url ?? project.final_video_url}
+          initialError={project.error_message}
+          aspectRatio={project.aspect_ratio}
+          statusEndpoint={
+            isLipSync ? `/api/lipsync/status/${project.id}` : undefined
+          }
+        />
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>

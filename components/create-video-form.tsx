@@ -18,8 +18,20 @@ import {
   MAX_SCRIPT_LENGTH,
 } from "@/lib/constants";
 import { deleteDraft, getDraft, saveDraft } from "@/lib/offline/drafts";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { AspectRatio, Avatar, Voice } from "@/lib/video-providers/types";
+
+type LipSyncEngineChoice = "off" | "auto" | "heygen" | "replicate" | "fal" | "mock";
+
+const LIPSYNC_ENGINE_OPTIONS: { value: LipSyncEngineChoice; label: string }[] = [
+  { value: "off", label: "Off — standard render" },
+  { value: "auto", label: "Auto (best available)" },
+  { value: "heygen", label: "HeyGen" },
+  { value: "replicate", label: "Replicate" },
+  { value: "fal", label: "fal MuseTalk" },
+  { value: "mock", label: "Mock (simulated)" },
+];
 
 interface CatalogState {
   avatars: Avatar[];
@@ -54,6 +66,46 @@ export function CreateVideoForm() {
 
   const [draftId, setDraftId] = React.useState<string | null>(null);
   const [draftSaved, setDraftSaved] = React.useState(false);
+
+  // Lip-sync pipeline options.
+  const [lipsyncEngine, setLipsyncEngine] =
+    React.useState<LipSyncEngineChoice>("off");
+  const [useSourceVideo, setUseSourceVideo] = React.useState(false);
+  const [sourceUrl, setSourceUrl] = React.useState<string | null>(null);
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [likenessConsent, setLikenessConsent] = React.useState(false);
+  const lipsyncEnabled = lipsyncEngine !== "off";
+
+  async function handleSourceUpload(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    setSourceUrl(null);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not signed in.");
+
+      const cleanName = file.name.replace(/[^\w.-]+/g, "_");
+      const storagePath = `${user.id}/sources/${crypto.randomUUID()}-${cleanName}`;
+      const { error } = await supabase.storage
+        .from("videos")
+        .upload(storagePath, file, { contentType: file.type, upsert: true });
+      if (error) throw new Error(error.message);
+
+      setSourceUrl(
+        supabase.storage.from("videos").getPublicUrl(storagePath).data.publicUrl
+      );
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Upload failed — try again."
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
 
   // Resume a locally stored draft (?draft=<id>) — works fully offline.
   React.useEffect(() => {
@@ -139,11 +191,14 @@ export function CreateVideoForm() {
   const canSubmit =
     !submitting &&
     !catalog.loading &&
+    !uploading &&
     script.trim().length > 0 &&
     script.length <= MAX_SCRIPT_LENGTH &&
     avatarId !== "" &&
     voiceId !== "" &&
-    consent;
+    consent &&
+    // Lip-sync requires explicit likeness permission.
+    (!lipsyncEnabled || likenessConsent);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -169,6 +224,7 @@ export function CreateVideoForm() {
           language,
           aspectRatio,
           backgroundColor: background.value,
+          lipsync: lipsyncEnabled,
           consent,
         }),
       });
@@ -179,6 +235,29 @@ export function CreateVideoForm() {
       if (!res.ok || !body.projectId) {
         throw new Error(body.error ?? "Video generation failed to start.");
       }
+
+      // Lip-sync pipeline: hand audio generation + face source to the
+      // lip-sync provider for the freshly created project.
+      if (lipsyncEnabled) {
+        const lipsyncRes = await fetch("/api/lipsync/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            projectId: body.projectId,
+            engine: lipsyncEngine,
+            avatarImageUrl: !useSourceVideo ? sourceUrl : null,
+            sourceVideoUrl: useSourceVideo ? sourceUrl : null,
+            consent: likenessConsent,
+          }),
+        });
+        const lipsyncBody = (await lipsyncRes.json()) as { error?: string };
+        if (!lipsyncRes.ok) {
+          throw new Error(
+            lipsyncBody.error ?? "The lip-sync job failed to start."
+          );
+        }
+      }
+
       // The render is queued — the local draft has served its purpose.
       if (draftId) void deleteDraft(draftId);
       router.push(`/projects/${body.projectId}`);
@@ -389,6 +468,97 @@ export function CreateVideoForm() {
                 ))}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Lip sync */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Lip sync</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="lipsync-engine">Lip Sync Engine</Label>
+              <Select
+                id="lipsync-engine"
+                value={lipsyncEngine}
+                onChange={(e) =>
+                  setLipsyncEngine(e.target.value as LipSyncEngineChoice)
+                }
+              >
+                {LIPSYNC_ENGINE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Animates the presenter&apos;s mouth to match the generated
+                voice. Auto picks the first configured engine.
+              </p>
+            </div>
+
+            {lipsyncEnabled && (
+              <>
+                <label className="flex cursor-pointer items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={useSourceVideo}
+                    onChange={(e) => {
+                      setUseSourceVideo(e.target.checked);
+                      setSourceUrl(null);
+                      setUploadError(null);
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-input accent-[hsl(var(--primary))]"
+                  />
+                  <span>Use source video instead of still avatar</span>
+                </label>
+
+                <div className="space-y-2">
+                  <Label htmlFor="lipsync-source">
+                    {useSourceVideo
+                      ? "Talking-head source video"
+                      : "Avatar image (optional — stock avatar used otherwise)"}
+                  </Label>
+                  <Input
+                    id="lipsync-source"
+                    type="file"
+                    accept={useSourceVideo ? "video/*" : "image/*"}
+                    disabled={uploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleSourceUpload(file);
+                    }}
+                  />
+                  {uploading && (
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Uploading…
+                    </p>
+                  )}
+                  {sourceUrl && !uploading && (
+                    <p className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                      <Check className="h-3 w-3" /> Uploaded
+                    </p>
+                  )}
+                  {uploadError && (
+                    <p className="text-xs text-destructive">{uploadError}</p>
+                  )}
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={likenessConsent}
+                    onChange={(e) => setLikenessConsent(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-input accent-[hsl(var(--primary))]"
+                  />
+                  <span>
+                    I have permission to use this person&apos;s image, voice,
+                    and likeness.
+                  </span>
+                </label>
+              </>
+            )}
           </CardContent>
         </Card>
 

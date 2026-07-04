@@ -23,6 +23,12 @@ export type Project = {
   final_video_url: string | null;
   thumbnail_url: string | null;
   error_message: string | null;
+  lipsync_provider: string | null;
+  lipsync_job_id: string | null;
+  lipsync_status: ProjectStatus | null;
+  audio_url: string | null;
+  source_avatar_url: string | null;
+  lipsynced_video_url: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -43,8 +49,19 @@ export interface Database {
     Tables: {
       projects: {
         Row: Project;
-        Insert: Omit<Project, "id" | "created_at" | "updated_at"> &
-          Partial<Pick<Project, "id" | "created_at" | "updated_at">>;
+        Insert: Partial<Project> &
+          Pick<
+            Project,
+            | "user_id"
+            | "title"
+            | "script"
+            | "avatar_id"
+            | "voice_id"
+            | "language"
+            | "aspect_ratio"
+            | "status"
+            | "provider"
+          >;
         Update: Partial<Project>;
         Relationships: [];
       };
