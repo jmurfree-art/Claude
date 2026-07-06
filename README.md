@@ -92,6 +92,15 @@ npm run build && npm start
 
 Deploys cleanly to Vercel or any Node host. Set the same env vars there.
 
+### Windows: zero-step install (recommended)
+
+Download [`scripts/install-windows.bat`](scripts/install-windows.bat) and
+double-click it. It installs Git/Node/ffmpeg if missing (via winget),
+downloads the app, asks for your Supabase anon key once, builds, creates
+a Desktop shortcut, and launches. From then on, the Desktop icon is the
+only thing you touch. (If it installs tools on the first pass, it asks
+you to run it a second time so Windows picks up the new PATH.)
+
 ### 6. Desktop shortcut (optional)
 
 Launch AvatarStudio like a desktop app — the launchers install
