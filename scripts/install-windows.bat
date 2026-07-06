@@ -16,6 +16,9 @@ set "INSTALL_DIR=%USERPROFILE%\AvatarStudio"
 set "REPO_URL=https://github.com/jmurfree-art/Claude.git"
 set "BRANCH=claude/avatar-video-generator-h2e8gy"
 set "SUPABASE_URL=https://fthvbvjvmhmpbqivueis.supabase.co"
+rem The publishable (anon) key is designed to be public; row-level security
+rem protects the data. Never put a secret/service_role key here.
+set "SUPABASE_ANON_KEY=sb_publishable_WtpM-y8PjgQIxYko4ztBPg_9AVEh_H2"
 set "NEEDS_RERUN="
 
 echo.
@@ -75,16 +78,10 @@ rem line-execution time, which batch only does outside (...) blocks.
 if exist "%INSTALL_DIR%\.env.local" goto :install
 
 echo.
-echo  One-time setup: your Supabase API key.
-echo  Copy the key labeled "anon public" or "publishable" — it starts
-echo  with eyJ or sb_publishable_. Find it here:
-echo  https://supabase.com/dashboard/project/fthvbvjvmhmpbqivueis/settings/api
-echo.
-set /p ANON_KEY="Paste anon key and press Enter: "
-set /p HEYGEN_KEY="Paste HeyGen API key (or just press Enter to skip): "
+set /p HEYGEN_KEY="Optional: paste your HeyGen API key (or just press Enter to skip): "
 
 echo NEXT_PUBLIC_SUPABASE_URL=%SUPABASE_URL%> "%INSTALL_DIR%\.env.local"
-echo NEXT_PUBLIC_SUPABASE_ANON_KEY=%ANON_KEY%>> "%INSTALL_DIR%\.env.local"
+echo NEXT_PUBLIC_SUPABASE_ANON_KEY=%SUPABASE_ANON_KEY%>> "%INSTALL_DIR%\.env.local"
 echo NEXT_PUBLIC_APP_URL=http://localhost:3000>> "%INSTALL_DIR%\.env.local"
 echo HEYGEN_API_KEY=%HEYGEN_KEY%>> "%INSTALL_DIR%\.env.local"
 
