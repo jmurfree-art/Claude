@@ -36,3 +36,11 @@ next-env.d.ts
 # local provider render output
 /.local-renders
 
+# desktop app build artifacts
+/desktop/node_modules
+/desktop/dist
+
+# engine service artifacts
+/engines/musetalk-service/models
+/engines/musetalk-service/__pycache__
+

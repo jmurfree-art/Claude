@@ -1,0 +1,36 @@
+{
+  "name": "avatarstudio-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AvatarStudio desktop app — wraps the local Next.js server in a native window.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "studio.avatar.desktop",
+    "productName": "AvatarStudio",
+    "files": ["main.js"],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "../public/icons/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.video"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "../public/icons/icon.svg",
+      "category": "AudioVideo"
+    }
+  }
+}
