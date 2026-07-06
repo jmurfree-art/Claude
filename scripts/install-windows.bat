@@ -75,8 +75,9 @@ rem line-execution time, which batch only does outside (...) blocks.
 if exist "%INSTALL_DIR%\.env.local" goto :install
 
 echo.
-echo  One-time setup: your Supabase anon key.
-echo  Find it here ^(copy the key labeled "anon public", starts with eyJ^):
+echo  One-time setup: your Supabase API key.
+echo  Copy the key labeled "anon public" or "publishable" — it starts
+echo  with eyJ or sb_publishable_. Find it here:
 echo  https://supabase.com/dashboard/project/fthvbvjvmhmpbqivueis/settings/api
 echo.
 set /p ANON_KEY="Paste anon key and press Enter: "
