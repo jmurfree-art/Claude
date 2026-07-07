@@ -1,5 +1,6 @@
 import "server-only";
 
+import { comfyUiEngine } from "./providers/comfyui";
 import { echoMimicEngine } from "./providers/echomimic";
 import { latentSyncEngine } from "./providers/latentsync";
 import { livePortraitEngine } from "./providers/liveportrait";
@@ -16,6 +17,7 @@ import {
 export { resolveAvatarEngine } from "./engine-router";
 
 const ENGINES: Record<AvatarEngineId, AvatarEngineProvider> = {
+  comfyui: comfyUiEngine,
   wav2lip: wav2LipEngine,
   latentsync: latentSyncEngine,
   echomimic: echoMimicEngine,

@@ -51,22 +51,23 @@ function candidatesForMode(
 ): AvatarEngineId[] {
   switch (mode) {
     case "video_retalking":
-      return ["videoretalking", "latentsync", "musetalk", "wav2lip"];
+      return ["videoretalking", "comfyui", "latentsync", "musetalk", "wav2lip"];
     case "expressive":
-      return ["echomimic", "liveportrait", "latentsync"];
+      return ["echomimic", "liveportrait", "comfyui", "latentsync"];
     case "fast_preview":
-      return ["wav2lip", "musetalk", "liveportrait", "latentsync"];
+      return ["wav2lip", "musetalk", "comfyui", "liveportrait", "latentsync"];
     case "highest_quality":
-      return ["latentsync", "musetalk", "echomimic", "wav2lip"];
+      // comfyui runs LatentSync locally, so it leads the quality tier.
+      return ["comfyui", "latentsync", "musetalk", "echomimic", "wav2lip"];
     case "portrait_animation":
       return ["liveportrait", "echomimic"];
     case "auto":
-      // Infer the goal from the provided media. wav2lip is the most
-      // commonly self-hosted engine, so it leads the lip-sync fallbacks.
+      // Infer the goal from the provided media. Locally hosted engines
+      // (comfyui = LatentSync quality, wav2lip = reliable) lead.
       if (hasSourceVideo)
-        return ["videoretalking", "wav2lip", "latentsync", "musetalk"];
+        return ["comfyui", "videoretalking", "wav2lip", "latentsync", "musetalk"];
       if (hasAvatarImage)
-        return ["wav2lip", "musetalk", "echomimic", "latentsync", "liveportrait"];
-      return ["wav2lip", "latentsync", "musetalk", "echomimic", "liveportrait"];
+        return ["comfyui", "wav2lip", "musetalk", "echomimic", "latentsync", "liveportrait"];
+      return ["comfyui", "wav2lip", "latentsync", "musetalk", "echomimic", "liveportrait"];
   }
 }

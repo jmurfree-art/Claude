@@ -362,6 +362,28 @@ same container to RunPod/Modal/a GPU VM and set `ENGINE_API_URL=https://…`
 plus `ENGINE_API_KEY` (sent as a Bearer token). Each provider file has a
 TODO block with specifics.
 
+**Already running ComfyUI?** The `comfyui` engine needs **no extra service
+at all** — it drives your local ComfyUI directly via its API. Requirements:
+ComfyUI running (default port 8188) with the
+[ComfyUI-LatentSyncWrapper](https://github.com/ShmuelRonen/ComfyUI-LatentSyncWrapper)
+custom node installed (clone into `ComfyUI/custom_nodes`, install its
+requirements, download the LatentSync 1.6 checkpoints per its README).
+Then in `.env.local`:
+
+```bash
+COMFYUI_API_URL=http://127.0.0.1:8188
+# optional but recommended on Windows portable installs:
+COMFYUI_INPUT_DIR=C:\ComfyUI_windows_portable\ComfyUI\input
+```
+
+The app uploads your audio + face media to ComfyUI, submits a LatentSync
+workflow, polls it, and serves the finished MP4. A still photo works too —
+it's auto-converted to a video with ffmpeg first. If the built-in workflow
+doesn't match your setup, export your own working workflow (API format)
+with the literal strings `VIDEO_INPUT_PLACEHOLDER` / `AUDIO_INPUT_PLACEHOLDER`
+where the inputs go, and point `COMFYUI_WORKFLOW_PATH` at it. The Engine
+Mode "Highest Quality Lip Sync" auto-routes to this engine when configured.
+
 **Ready-made reference services** (both implement the jobs contract):
 
 - **[`engines/wav2lip-service/`](engines/wav2lip-service/)** — the easiest

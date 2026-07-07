@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 export type AvatarEngineChoice =
   | "off"
   | "auto"
+  | "comfyui"
   | "wav2lip"
   | "latentsync"
   | "echomimic"
@@ -52,6 +53,7 @@ export const INITIAL_AVATAR_ENGINE_STATE: AvatarEngineState = {
 const ENGINE_OPTIONS: { value: AvatarEngineChoice; label: string }[] = [
   { value: "off", label: "Off — use standard render / lip-sync" },
   { value: "auto", label: "Auto (routed by goal)" },
+  { value: "comfyui", label: "ComfyUI LatentSync (local, free)" },
   { value: "wav2lip", label: "Wav2Lip (self-hosted, free)" },
   { value: "latentsync", label: "LatentSync" },
   { value: "echomimic", label: "EchoMimic" },
