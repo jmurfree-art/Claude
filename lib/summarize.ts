@@ -116,15 +116,15 @@ export function summarize(text: string, opts?: { sentences?: number }): string {
   }
 
   let maxFreq = 0;
-  for (const count of freq.values()) {
+  freq.forEach((count) => {
     if (count > maxFreq) maxFreq = count;
-  }
+  });
 
   const wordScores = new Map<string, number>();
   if (maxFreq > 0) {
-    for (const [word, count] of freq) {
+    freq.forEach((count, word) => {
       wordScores.set(word, count / maxFreq);
-    }
+    });
   }
 
   const scored = sentences.map((sentence, index) => {
