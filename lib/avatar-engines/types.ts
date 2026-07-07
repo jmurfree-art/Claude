@@ -14,6 +14,7 @@ import type { AspectRatio } from "@/lib/video-providers/types";
  */
 
 export const AVATAR_ENGINE_IDS = [
+  "wav2lip",
   "latentsync",
   "echomimic",
   "musetalk",

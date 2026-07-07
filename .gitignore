@@ -43,4 +43,8 @@ next-env.d.ts
 # engine service artifacts
 /engines/musetalk-service/models
 /engines/musetalk-service/__pycache__
+/engines/wav2lip-service/__pycache__
+/engines/wav2lip-service/venv
+/engines/wav2lip-service/Wav2Lip
+/engines/wav2lip-service/jobs
 

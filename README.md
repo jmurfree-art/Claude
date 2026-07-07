@@ -339,6 +339,7 @@ GET  {API_URL}/jobs/{jobId}  → { "jobId", "status", "progress", "outputVideoUr
 
 | Engine | Best for | Needs | Repo |
 | --- | --- | --- | --- |
+| **Wav2Lip** | Free local lip-sync (easiest self-host) | audio + image or video | [Rudrabha/Wav2Lip](https://github.com/Rudrabha/Wav2Lip) |
 | **LatentSync** | Highest-quality lip-sync | audio + image or video | [bytedance/LatentSync](https://github.com/bytedance/LatentSync) |
 | **EchoMimic** | Expressive portrait motion | audio + portrait image | [antgroup/echomimic](https://github.com/antgroup/echomimic) |
 | **MuseTalk** | Fast preview / realtime lip-sync | audio + image or video | [TMElyralab/MuseTalk](https://github.com/TMElyralab/MuseTalk) |
@@ -361,12 +362,21 @@ same container to RunPod/Modal/a GPU VM and set `ENGINE_API_URL=https://…`
 plus `ENGINE_API_KEY` (sent as a Bearer token). Each provider file has a
 TODO block with specifics.
 
-A **ready-made reference service exists for MuseTalk**:
-[`engines/musetalk-service/`](engines/musetalk-service/) — a FastAPI +
-Docker wrapper implementing the jobs contract around MuseTalk v1.5
-inference. `docker compose up --build` on a machine with an NVIDIA GPU,
-then set `MUSETALK_API_URL=http://127.0.0.1:9103`. Use it as the template
-when wrapping the other four engines.
+**Ready-made reference services** (both implement the jobs contract):
+
+- **[`engines/wav2lip-service/`](engines/wav2lip-service/)** — the easiest
+  fully-free, no-tokens, runs-on-your-own-GPU path, and **no Docker**. On
+  Windows with an NVIDIA GPU (an RTX 4070 is plenty): run `setup.bat` once
+  (creates a Python venv and downloads the model weights), then `run.bat`,
+  then set `WAV2LIP_API_URL=http://127.0.0.1:9106` in `.env.local` and
+  restart. Feed it a face photo or a video + your script → a talking MP4,
+  entirely on your machine. This is the recommended standalone engine.
+- **[`engines/musetalk-service/`](engines/musetalk-service/)** — FastAPI +
+  Docker wrapper around MuseTalk v1.5 (higher quality, realtime-capable).
+  `docker compose up --build` on an NVIDIA GPU host, then
+  `MUSETALK_API_URL=http://127.0.0.1:9103`.
+
+Use either as the template when wrapping the other engines.
 
 **Flow**: the create page's Avatar Engine section (engine mode + engine +
 uploads + emotion + motion intensity) → `POST /api/avatar-engine/create`

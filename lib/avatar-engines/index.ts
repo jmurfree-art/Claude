@@ -6,6 +6,7 @@ import { livePortraitEngine } from "./providers/liveportrait";
 import { mockAvatarEngine } from "./providers/mock";
 import { museTalkEngine } from "./providers/musetalk";
 import { videoReTalkingEngine } from "./providers/videoretalking";
+import { wav2LipEngine } from "./providers/wav2lip";
 import {
   AvatarEngineError,
   type AvatarEngineId,
@@ -15,6 +16,7 @@ import {
 export { resolveAvatarEngine } from "./engine-router";
 
 const ENGINES: Record<AvatarEngineId, AvatarEngineProvider> = {
+  wav2lip: wav2LipEngine,
   latentsync: latentSyncEngine,
   echomimic: echoMimicEngine,
   musetalk: museTalkEngine,

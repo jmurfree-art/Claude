@@ -51,19 +51,22 @@ function candidatesForMode(
 ): AvatarEngineId[] {
   switch (mode) {
     case "video_retalking":
-      return ["videoretalking", "latentsync", "musetalk"];
+      return ["videoretalking", "latentsync", "musetalk", "wav2lip"];
     case "expressive":
       return ["echomimic", "liveportrait", "latentsync"];
     case "fast_preview":
-      return ["musetalk", "liveportrait", "latentsync"];
+      return ["wav2lip", "musetalk", "liveportrait", "latentsync"];
     case "highest_quality":
-      return ["latentsync", "echomimic", "musetalk"];
+      return ["latentsync", "musetalk", "echomimic", "wav2lip"];
     case "portrait_animation":
       return ["liveportrait", "echomimic"];
     case "auto":
-      // Infer the goal from the provided media.
-      if (hasSourceVideo) return ["videoretalking", "latentsync", "musetalk"];
-      if (hasAvatarImage) return ["musetalk", "echomimic", "latentsync", "liveportrait"];
-      return ["latentsync", "musetalk", "echomimic", "liveportrait"];
+      // Infer the goal from the provided media. wav2lip is the most
+      // commonly self-hosted engine, so it leads the lip-sync fallbacks.
+      if (hasSourceVideo)
+        return ["videoretalking", "wav2lip", "latentsync", "musetalk"];
+      if (hasAvatarImage)
+        return ["wav2lip", "musetalk", "echomimic", "latentsync", "liveportrait"];
+      return ["wav2lip", "latentsync", "musetalk", "echomimic", "liveportrait"];
   }
 }
