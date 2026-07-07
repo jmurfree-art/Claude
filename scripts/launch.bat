@@ -22,22 +22,23 @@ if not exist ".env.local" (
 )
 
 rem Auto-update: pull the latest code. If the pull changed anything, the
-rem launcher itself may have changed — re-exec it so cmd doesn't run a
+rem launcher itself may have changed - re-exec it so cmd doesn't run a
 rem half-old/half-new script (batch files are read by byte offset). The
-rem AVATARSTUDIO_UPDATED guard stops an infinite re-exec loop.
-if not defined AVATARSTUDIO_UPDATED (
-  set "OLD_HEAD="
-  set "NEW_HEAD="
-  for /f %%i in ('git rev-parse HEAD 2^>nul') do set "OLD_HEAD=%%i"
-  git pull --ff-only
-  for /f %%i in ('git rev-parse HEAD 2^>nul') do set "NEW_HEAD=%%i"
-  if not "%OLD_HEAD%"=="%NEW_HEAD%" (
-    echo Update downloaded — relaunching...
-    set "AVATARSTUDIO_UPDATED=1"
-    call "%~f0"
-    exit /b %errorlevel%
-  )
-)
+rem AVATARSTUDIO_UPDATED guard stops an infinite re-exec loop. NOTE: kept
+rem flat (goto, no parenthesized blocks) because %VAR% inside a block
+rem expands at parse time and would compare stale/empty values.
+if defined AVATARSTUDIO_UPDATED goto :after_update
+set "OLD_HEAD="
+set "NEW_HEAD="
+for /f %%i in ('git rev-parse HEAD 2^>nul') do set "OLD_HEAD=%%i"
+git pull --ff-only
+for /f %%i in ('git rev-parse HEAD 2^>nul') do set "NEW_HEAD=%%i"
+if "%OLD_HEAD%"=="%NEW_HEAD%" goto :after_update
+echo Update downloaded - relaunching...
+set "AVATARSTUDIO_UPDATED=1"
+call "%~f0"
+exit /b %errorlevel%
+:after_update
 
 if not exist "node_modules" (
   echo Installing dependencies ^(first run^)...
