@@ -27,6 +27,23 @@ if not exist "node_modules" (
   if errorlevel 1 ( pause & exit /b 1 )
 )
 
+rem Auto-update: pull the latest code; rebuild only when it changed.
+set "OLD_HEAD="
+set "NEW_HEAD="
+for /f %%i in ('git rev-parse HEAD 2^>nul') do set "OLD_HEAD=%%i"
+git pull --ff-only
+for /f %%i in ('git rev-parse HEAD 2^>nul') do set "NEW_HEAD=%%i"
+if not "%OLD_HEAD%"=="%NEW_HEAD%" (
+  echo Update found — rebuilding AvatarStudio...
+  call npm install
+  call npm run build
+  if errorlevel 1 ( echo Build failed. & pause & exit /b 1 )
+)
+
+rem Stop any previous AvatarStudio server still holding port 3000, so a
+rem stale build never keeps serving after an update.
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr /r ":3000 .*LISTENING"') do taskkill /pid %%p /T /F >nul 2>nul
+
 if not exist ".next" (
   echo Building AvatarStudio ^(first run, takes a minute^)...
   call npm run build
