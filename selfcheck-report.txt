@@ -1,5 +1,5 @@
 WatchDeck self-check report
-Generated: 2026-07-07T18:50:32Z
+Generated: 2026-07-07T23:34:46Z
 Mode: mock
 Node: v22.22.2
 pnpm: 10.33.0
@@ -22,3 +22,20 @@ Runtime checks (server on :3111 + scripts/selfcheck.mjs):
   ✅ PASS  S8 mobile — homepage responded 200 with a viewport meta tag for a mobile UA
 
 Overall verdict: PASS
+Browser UI checks (scripts/ui-test.mjs, Chromium via playwright-core, mock yt-dlp):
+  ✅ PASS  iphone-se (375x667): home renders with no horizontal scroll
+  ✅ PASS  iphone-se: header collapses to hamburger menu (desktop nav hidden)
+  ✅ PASS  iphone-se: signed-out search renders 12 result cards
+  ✅ PASS  iphone-se: results grid has no horizontal scroll
+  ✅ PASS  ipad (768x1024): home renders with no horizontal scroll
+  ✅ PASS  ipad: full desktop nav visible
+  ✅ PASS  ipad: signed-out search renders 12 result cards
+  ✅ PASS  ipad: results grid has no horizontal scroll
+  ✅ PASS  desktop (1440x900): home renders with no horizontal scroll
+  ✅ PASS  desktop: full desktop nav visible
+  ✅ PASS  desktop: signed-out search renders 12 result cards
+  ✅ PASS  desktop: results grid has no horizontal scroll
+  ✅ PASS  desktop: Embed toggle swaps card to a youtube-nocookie iframe
+  ✅ PASS  desktop: Summarize sheet opens and renders a caption-sourced summary
+
+UI self-test verdict: PASS (14/14)
