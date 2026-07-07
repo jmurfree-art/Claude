@@ -51,8 +51,11 @@ create table if not exists public.watchlist (
 );
 
 -- ============================================================================
--- Indexes (spec: 3 — owner lookup, recency ordering, full-text search)
+-- Indexes (spec: kind, owner lookup, full-text search; plus recency ordering)
 -- ============================================================================
+
+create index if not exists videos_kind_idx
+  on public.videos (kind);
 
 create index if not exists videos_owner_id_idx
   on public.videos (owner_id);
@@ -73,7 +76,7 @@ alter table public.watchlist enable row level security;
 
 -- Policy 1: anyone (anon or authenticated) may read non-deleted videos.
 -- Backs the public /v/<id> page and cross-user "public read" behavior.
-create policy videos_public_read on public.videos
+create policy "videos read all" on public.videos
   for select
   using (deleted_at is null);
 
@@ -81,13 +84,13 @@ create policy videos_public_read on public.videos
 -- update — including soft delete via deleted_at — and hard delete), even
 -- rows already soft-deleted. Owner-only: owner_id must equal auth.uid() on
 -- both the existing row (using) and the row being written (with check).
-create policy videos_owner_crud on public.videos
+create policy "videos owner write" on public.videos
   for all
   using (owner_id = auth.uid())
   with check (owner_id = auth.uid());
 
 -- Policy 3: a user has full CRUD over only their own watchlist rows.
-create policy watchlist_owner_crud on public.watchlist
+create policy "watchlist self" on public.watchlist
   for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());

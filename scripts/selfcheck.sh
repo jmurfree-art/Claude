@@ -102,7 +102,7 @@ fi
 SERVER_LOG="$(log_path_for 'server')"
 echo ""
 echo "==> starting server on :3111 (SELFCHECK_MODE=${SELFCHECK_MODE})"
-pnpm start -p 3111 > "${SERVER_LOG}" 2>&1 &
+pnpm exec next start -p 3111 > "${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 
 READY=0

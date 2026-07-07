@@ -3,6 +3,8 @@ import { WatchlistClient } from '@/components/WatchlistClient';
 import { EmptyState } from '@/components/EmptyState';
 import type { WatchlistItem } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function WatchlistPage() {
   let items: WatchlistItem[] = [];
   let configError = false;

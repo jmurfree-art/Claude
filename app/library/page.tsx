@@ -2,6 +2,8 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { LibraryClient } from '@/components/LibraryClient';
 import type { VideoRow } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LibraryPage() {
   let videos: VideoRow[] = [];
 
