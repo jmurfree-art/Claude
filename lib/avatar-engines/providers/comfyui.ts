@@ -174,8 +174,11 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
           "libx264",
           "-pix_fmt",
           "yuv420p",
+          // Cap the working resolution: LatentSync crops the face to 512px
+          // internally, and full-res frames make VHS_LoadVideo allocate
+          // multi-GB arrays ("cannot allocate array memory") on long audio.
           "-vf",
-          "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+          "scale=-2:min(576\\,ih)",
           "-y",
           stillVideoPath,
         ]);
