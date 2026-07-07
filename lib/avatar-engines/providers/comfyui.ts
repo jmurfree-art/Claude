@@ -29,7 +29,7 @@ const FFPROBE_PATH = process.env.FFPROBE_PATH ?? "ffprobe";
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const DEFAULT_LATENTSYNC_NODE = "LatentSync1.6";
+const DEFAULT_LATENTSYNC_NODE = "LatentSyncNode";
 const DEFAULT_SEED = 1247;
 const DEFAULT_LIPS_EXPRESSION = 1.5;
 const DEFAULT_INFERENCE_STEPS = 20;
@@ -59,32 +59,28 @@ interface ComfyUiOutputFile {
  * ComfyUI LatentSync avatar engine.
  *
  * Drives a locally (or remotely) running ComfyUI instance with the
- * ComfyUI-LatentSyncWrapper custom node (class_type "LatentSync1.6" by
+ * ComfyUI-LatentSyncWrapper custom node (class_type "LatentSyncNode" by
  * default) installed, to produce lip-synced video from a still portrait or
- * source video plus speech audio.
+ * source video plus speech audio. The built-in graph also uses
+ * VideoHelperSuite (VHS_LoadVideo / VHS_VideoCombine) to load the face into
+ * frames and recombine the synced result.
  *
  * Setup:
- *   1. Run ComfyUI with ComfyUI-LatentSyncWrapper installed
- *      (https://github.com/ShmuelRonen/ComfyUI-LatentSyncWrapper).
+ *   1. Run ComfyUI with ComfyUI-LatentSyncWrapper AND VideoHelperSuite
+ *      installed (https://github.com/ShmuelRonen/ComfyUI-LatentSyncWrapper).
  *   2. Set `COMFYUI_API_URL` to its base URL, e.g. http://127.0.0.1:8188.
  *      This is the only required env var — without it `isConfigured()` is
  *      false and this provider refuses jobs (use the "mock" engine for a
  *      simulated/no-infra flow instead; this provider has no simulated mode).
- *   3. Optional `COMFYUI_INPUT_DIR` — absolute path to ComfyUI's `input/`
- *      folder on disk (needed when ComfyUI resolves `video_path` relative to
- *      its own working directory differently than this process would, e.g.
- *      a Windows portable install). When unset, a path relative to the
- *      ComfyUI process's cwd ("input/<file>") is used.
- *   4. Optional `COMFYUI_WORKFLOW_PATH` — path to a custom API-format
+ *   3. Optional `COMFYUI_WORKFLOW_PATH` — path to a custom API-format
  *      workflow JSON exported from the ComfyUI UI ("Save (API Format)"),
  *      containing the literal placeholder strings "VIDEO_INPUT_PLACEHOLDER"
- *      and "AUDIO_INPUT_PLACEHOLDER" somewhere a video path / audio filename
- *      string would go. When set, that workflow is used (with placeholders
- *      substituted) instead of the minimal built-in LoadAudio + LatentSync
- *      graph.
- *   5. Optional `COMFYUI_LATENTSYNC_NODE` — override the LatentSync node's
+ *      and "AUDIO_INPUT_PLACEHOLDER" where the uploaded video/audio filenames
+ *      go. When set, that workflow is used (with placeholders substituted)
+ *      instead of the built-in graph — use this if your node versions differ.
+ *   4. Optional `COMFYUI_LATENTSYNC_NODE` — override the LatentSync node's
  *      `class_type` if a fork/newer version renamed it (default
- *      "LatentSync1.6").
+ *      "LatentSyncNode").
  */
 export class ComfyUiAvatarEngine implements AvatarEngineProvider {
   readonly id = "comfyui";
@@ -197,11 +193,10 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
         `avatarstudio-${jobUuid}${path.extname(faceVideoPath)}`
       );
 
-      const resolvedVideoPath = this.resolveVideoPath(uploadedVideoName);
       const graph = await this.buildWorkflowGraph({
         input,
         uploadedAudioName,
-        resolvedVideoPath,
+        uploadedVideoName,
       });
 
       const promptId = await this.submitPrompt(baseUrl, graph);
@@ -346,21 +341,17 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
     return body.name;
   }
 
-  private resolveVideoPath(uploadedVideoName: string): string {
-    const inputDir = process.env.COMFYUI_INPUT_DIR;
-    if (inputDir) {
-      return path.join(inputDir, uploadedVideoName);
-    }
-    return `input/${uploadedVideoName}`;
-  }
-
   private async buildWorkflowGraph(opts: {
     input: AvatarEngineInput;
     uploadedAudioName: string;
-    resolvedVideoPath: string;
+    uploadedVideoName: string;
   }): Promise<Record<string, unknown>> {
-    const { input, uploadedAudioName, resolvedVideoPath } = opts;
+    const { input, uploadedAudioName, uploadedVideoName } = opts;
 
+    // Custom workflow override: the user's exported API-format workflow with
+    // literal placeholders. Both are replaced with the bare uploaded
+    // filenames (VHS_LoadVideo / LoadAudio resolve them from ComfyUI's
+    // input/ directory).
     const workflowPath = process.env.COMFYUI_WORKFLOW_PATH;
     if (workflowPath) {
       const raw = await readFile(workflowPath, "utf8");
@@ -368,7 +359,7 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
         .split("AUDIO_INPUT_PLACEHOLDER")
         .join(uploadedAudioName)
         .split("VIDEO_INPUT_PLACEHOLDER")
-        .join(resolvedVideoPath);
+        .join(uploadedVideoName);
       return JSON.parse(substituted) as Record<string, unknown>;
     }
 
@@ -382,21 +373,51 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
       input.motionIntensity
     );
 
+    // Built-in graph for ComfyUI-LatentSyncWrapper's LatentSyncNode, which
+    // takes IMAGE frames + an AUDIO connection (not a path). VideoHelperSuite
+    // loads the face video into frames and recombines the synced output.
+    //   VHS_LoadVideo → LatentSyncNode(images, audio) → VHS_VideoCombine → mp4
     return {
-      "1": {
+      "10": {
+        class_type: "VHS_LoadVideo",
+        inputs: {
+          video: uploadedVideoName,
+          force_rate: 25,
+          custom_width: 0,
+          custom_height: 0,
+          frame_load_cap: 0,
+          skip_first_frames: 0,
+          select_every_nth: 1,
+        },
+      },
+      "11": {
         class_type: "LoadAudio",
         inputs: {
           audio: uploadedAudioName,
         },
       },
-      "2": {
+      "12": {
         class_type: latentSyncNode,
         inputs: {
-          video_path: resolvedVideoPath,
-          audio: ["1", 0],
+          images: ["10", 0],
+          audio: ["11", 0],
           seed,
           lips_expression: lipsExpression,
           inference_steps: inferenceSteps,
+        },
+      },
+      "13": {
+        class_type: "VHS_VideoCombine",
+        inputs: {
+          images: ["12", 0],
+          // LatentSyncNode emits the aligned audio on output index 1.
+          audio: ["12", 1],
+          frame_rate: 25,
+          loop_count: 0,
+          filename_prefix: "AvatarStudio",
+          format: "video/h264-mp4",
+          pingpong: false,
+          save_output: true,
         },
       },
     };
