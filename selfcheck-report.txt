@@ -1,0 +1,24 @@
+WatchDeck self-check report
+Generated: 2026-07-07T18:50:32Z
+Mode: mock
+Node: v22.22.2
+pnpm: 10.33.0
+yt-dlp: mock (scripts/mock-yt-dlp.mjs)
+
+Toolchain steps:
+  ✅ PASS  pnpm install
+  ✅ PASS  pnpm build
+  ✅ PASS  pnpm lint
+  ✅ PASS  pnpm test
+
+Runtime checks (server on :3111 + scripts/selfcheck.mjs):
+  ✅ PASS  S1 search — 12 results returned, all with title/thumbnail/durationSec
+  ⏭ BLOCKED  S2 links live — YouTube egress blocked in sandbox; run SELFCHECK_MODE=live where YouTube is reachable
+  ✅ PASS  S3 summarize — videoId=XbNsNL7fKqm, summary length=238, source=captions
+  ⏭ BLOCKED  S4 auth+watchlist roundtrip (DB layer + route gate) — Supabase not configured in this environment
+  ⏭ BLOCKED  S5 upload — Supabase not configured in this environment
+  ⏭ BLOCKED  S6 create link -> public — Supabase not configured in this environment
+  ⏭ BLOCKED  S7 edit+soft-delete RLS — Supabase not configured in this environment
+  ✅ PASS  S8 mobile — homepage responded 200 with a viewport meta tag for a mobile UA
+
+Overall verdict: PASS
