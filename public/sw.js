@@ -1,4 +1,4 @@
-const CACHE_VERSION = "avatarstudio-v1";
+const CACHE_VERSION = "avatarstudio-v2";
 const CACHE_URLS = ["/offline", "/manifest.webmanifest", "/icons/icon.svg"];
 
 // Install: pre-cache assets
@@ -80,7 +80,12 @@ self.addEventListener("fetch", (event) => {
             if (cached) {
               return cached;
             }
-            return caches.match("/offline");
+            // Fall back to the offline page; if even that is missing,
+            // return a real error Response — never undefined, which
+            // throws "Failed to convert value to 'Response'".
+            return caches
+              .match("/offline")
+              .then((offline) => offline ?? Response.error());
           });
         })
     );
@@ -102,7 +107,9 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          return caches.match(request);
+          return caches
+            .match(request)
+            .then((cached) => cached ?? Response.error());
         })
     );
     return;
