@@ -39,3 +39,22 @@ Browser UI checks (scripts/ui-test.mjs, Chromium via playwright-core, mock yt-dl
   ✅ PASS  desktop: Summarize sheet opens and renders a caption-sourced summary
 
 UI self-test verdict: PASS (14/14)
+
+RLS policy verification (scripts/rls-local-test.mjs, real Postgres via PGlite,
+actual migration SQL applied verbatim minus Supabase-Storage statements;
+auth.uid() shimmed to a session GUC — GoTrue auth flows, Storage policies and
+signed URLs still require a live Supabase project):
+  ✅ PASS  R1  owner can insert their own videos row
+  ✅ PASS  R2  forged-owner insert rejected by WITH CHECK
+  ✅ PASS  R3  other users can read non-deleted videos (public read)
+  ✅ PASS  R4  cross-user UPDATE affects 0 rows
+  ✅ PASS  R5  cross-user soft-delete affects 0 rows
+  ✅ PASS  R6  owner can insert their own watchlist row
+  ✅ PASS  R7  watchlist insert for another user rejected by WITH CHECK
+  ✅ PASS  R8  watchlist rows invisible cross-user
+  ✅ PASS  R9  watchlist rows undeletable cross-user
+  ✅ PASS  R10 owner soft-delete hides the video from other users
+  ✅ PASS  R11 owner still sees their own soft-deleted row
+  ✅ PASS  R12 updated_at trigger fires on UPDATE
+
+RLS local verification verdict: PASS (12/12)

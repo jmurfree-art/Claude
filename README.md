@@ -127,6 +127,21 @@ The full report is written to `selfcheck-report.txt` at the repo root (and
 printed to stdout at the end of the run). The script exits non-zero if any
 check genuinely **FAILs**; **BLOCKED** checks do not fail the run.
 
+Two optional, deeper local verifications (no Supabase project needed):
+
+```bash
+# Browser UI test at 375/768/1440px viewports (needs a Chromium binary;
+# pass its path as the 2nd arg or set CHROMIUM_PATH):
+pnpm exec next start -p 3113 &   # with YTDLP_MOCK=1 in sandboxes
+node scripts/ui-test.mjs http://localhost:3113
+
+# RLS policy semantics: applies supabase/migrations/0001_init.sql to an
+# embedded real-Postgres engine (PGlite) with a shimmed auth.uid() and
+# asserts 12 cross-user isolation properties. Storage policies and GoTrue
+# auth flows still require a live project.
+node scripts/rls-local-test.mjs
+```
+
 ## ⚠️ No moderation, no quotas (MVP)
 
 This MVP intentionally ships **without** any per-user storage quota,
