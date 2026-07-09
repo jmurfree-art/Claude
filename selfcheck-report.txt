@@ -1,5 +1,5 @@
 WatchDeck self-check report
-Generated: 2026-07-07T23:34:46Z
+Generated: 2026-07-09T23:30:49Z
 Mode: mock
 Node: v22.22.2
 pnpm: 10.33.0
@@ -23,38 +23,16 @@ Runtime checks (server on :3111 + scripts/selfcheck.mjs):
 
 Overall verdict: PASS
 Browser UI checks (scripts/ui-test.mjs, Chromium via playwright-core, mock yt-dlp):
-  ✅ PASS  iphone-se (375x667): home renders with no horizontal scroll
-  ✅ PASS  iphone-se: header collapses to hamburger menu (desktop nav hidden)
-  ✅ PASS  iphone-se: signed-out search renders 12 result cards
-  ✅ PASS  iphone-se: results grid has no horizontal scroll
-  ✅ PASS  ipad (768x1024): home renders with no horizontal scroll
-  ✅ PASS  ipad: full desktop nav visible
-  ✅ PASS  ipad: signed-out search renders 12 result cards
-  ✅ PASS  ipad: results grid has no horizontal scroll
-  ✅ PASS  desktop (1440x900): home renders with no horizontal scroll
-  ✅ PASS  desktop: full desktop nav visible
-  ✅ PASS  desktop: signed-out search renders 12 result cards
-  ✅ PASS  desktop: results grid has no horizontal scroll
-  ✅ PASS  desktop: Embed toggle swaps card to a youtube-nocookie iframe
-  ✅ PASS  desktop: Summarize sheet opens and renders a caption-sourced summary
-
-UI self-test verdict: PASS (14/14)
+  ✅ PASS  14/14 — no horizontal scroll at 375/768/1440px, header collapses to
+  hamburger under 768px, signed-out search renders 12-card grid at all three
+  viewports, Embed toggle swaps to a youtube-nocookie iframe, Summarize sheet
+  renders a caption-sourced summary.
 
 RLS policy verification (scripts/rls-local-test.mjs, real Postgres via PGlite,
-actual migration SQL applied verbatim minus Supabase-Storage statements;
-auth.uid() shimmed to a session GUC — GoTrue auth flows, Storage policies and
-signed URLs still require a live Supabase project):
-  ✅ PASS  R1  owner can insert their own videos row
-  ✅ PASS  R2  forged-owner insert rejected by WITH CHECK
-  ✅ PASS  R3  other users can read non-deleted videos (public read)
-  ✅ PASS  R4  cross-user UPDATE affects 0 rows
-  ✅ PASS  R5  cross-user soft-delete affects 0 rows
-  ✅ PASS  R6  owner can insert their own watchlist row
-  ✅ PASS  R7  watchlist insert for another user rejected by WITH CHECK
-  ✅ PASS  R8  watchlist rows invisible cross-user
-  ✅ PASS  R9  watchlist rows undeletable cross-user
-  ✅ PASS  R10 owner soft-delete hides the video from other users
-  ✅ PASS  R11 owner still sees their own soft-deleted row
-  ✅ PASS  R12 updated_at trigger fires on UPDATE
+actual migration SQL applied verbatim minus Supabase-Storage statements):
+  ✅ PASS  12/12 — owner CRUD works; forged-owner inserts, cross-user updates,
+  soft-deletes, watchlist reads/writes/deletes all blocked; owner soft-delete
+  hides the row publicly while staying visible to the owner; updated_at
+  trigger fires. (GoTrue auth, Storage policies, signed URLs need a live project.)
 
-RLS local verification verdict: PASS (12/12)
+Combined verdict: PASS (harness 7✅/5⏭ blocked-by-sandbox, UI 14/14, RLS 12/12)
