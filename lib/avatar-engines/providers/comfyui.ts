@@ -129,6 +129,23 @@ export class ComfyUiAvatarEngine implements AvatarEngineProvider {
     const baseUrl = this.getBaseUrl();
     const jobUuid = randomUUID();
 
+    // Evict cached models before the job. On RAM-constrained machines,
+    // leftovers from prior video sessions (e.g. LTX 22B) starve LatentSync
+    // ("cannot allocate array memory"). Opt out with
+    // COMFYUI_FREE_BEFORE_JOB=false. Best-effort — never blocks the job.
+    if (process.env.COMFYUI_FREE_BEFORE_JOB !== "false") {
+      try {
+        await fetch(`${baseUrl}/free`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ unload_models: true, free_memory: true }),
+          cache: "no-store",
+        });
+      } catch {
+        // ComfyUI without the /free endpoint or transient failure — proceed.
+      }
+    }
+
     await mkdir(TMP_DIR, { recursive: true });
 
     const audioPath = path.join(
