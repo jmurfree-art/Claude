@@ -16,10 +16,21 @@ Turn "make a video about X" into a finished, on-brand animated explainer via the
 1. Call `get_workflow_instructions` with `{workflow: "video-explainer"}` (Higgsfield MCP) and follow its phases exactly.
 2. Apply the Murfree overrides below wherever the two differ in emphasis.
 
-## Before spending anything
+## Footage-first (read before generating anything)
 
-- Call `balance` first. Rough shape: text phases are free; the style key, each 10s clip, and each voice take cost credits (subtitles +0.05/block). A 1-minute video = 1 key + 6 clips + 6 voice takes. If balance looks low relative to recent transactions, tell the user the estimate and get a go-ahead.
-- The three choices that belong to the USER (hard rule, never auto-pick unless they say "you choose"): visual style (show the preset gallery / offer options), narrator voice (from `list_voices`), and duration/aspect/subtitles.
+**Real practice footage beats AI-generated clips, and it's free.** The practice has professional video in Google Drive (office tour, services reel, brand video, procedure animations) plus more via `vimeo_urls.txt`. Generic AI clips of invented patients look stock no matter the budget; real office + real Dr. Murfree does not. **Default to editing existing footage; treat AI generation as a paid last resort for shots that can't be filmed.**
+
+- **AI video is NOT free on the Plus plan.** Each 10s clip ≈ 30 credits (a 30s video ran 93 credits). The "unlimited" Higgsfield offers are an Ultra-plan upsell, mostly still-image models. Never imply free/unlimited video exists on Plus.
+- **This Claude Code sandbox cannot render video** — no ffmpeg (can't install), large private Drive files can't be pulled in, outbound media downloads are blocked. So local editing is out. Use one of:
+  - **Free, user-run:** hand the user a timecoded edit guide for CapCut/DaVinci Resolve (both free, import Drive directly).
+  - **Free, Claude-run:** if the user uploads their clips into their Higgsfield library, assemble with the `explainer_video` tool — **assembly costs 0 credits** (only generation costs). Lay existing/free voiceover over it.
+- Don't invent source timecodes for footage you can't watch — give structure and let the editor pick shots.
+
+## If generating AI clips anyway (paid path)
+
+- Call `balance` first. Text phases are free; the style key, each 10s clip (~30 cr), and each voice take (~1 cr) cost credits. Always `get_cost`-preflight and tell the user the total before spending.
+- Prefer **image-to-video from a real frame** of their footage over inventing scenes from text, so it's their actual office animated.
+- The three choices that belong to the USER (never auto-pick unless they say "you choose"): visual style, narrator voice (from `list_voices`), duration/aspect/subtitles.
 
 ## Murfree defaults (offer these as recommendations, user confirms)
 
