@@ -1,0 +1,7 @@
+# Service-layer dependencies only. MuseTalk's own inference dependencies
+# (torch, mmcv, diffusers, etc.) are installed separately in the Docker image
+# per https://github.com/TMElyralab/MuseTalk's README.
+fastapi>=0.110,<1.0
+uvicorn[standard]>=0.29,<1.0
+httpx>=0.27,<1.0
+pyyaml>=6.0,<7.0

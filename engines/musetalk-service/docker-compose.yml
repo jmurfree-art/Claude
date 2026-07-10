@@ -1,0 +1,25 @@
+services:
+  musetalk:
+    build: .
+    ports:
+      - "9103:8000"
+    environment:
+      PUBLIC_BASE_URL: "http://127.0.0.1:9103"
+      # Uncomment and set to require Authorization: Bearer <key> on /jobs routes.
+      # MUSETALK_SERVICE_API_KEY: "change-me"
+    volumes:
+      # Pre-downloaded weights (via `sh ./download_weights.sh` in the
+      # MuseTalk repo) -- see README.md. Mounted over /opt/MuseTalk/models
+      # so the ~10GB of weights don't need to live in the image.
+      - ./models:/opt/MuseTalk/models
+      - musetalk-jobs:/data/jobs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  musetalk-jobs:

@@ -1,0 +1,50 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files — never commit secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
+
+# local provider render output
+/.local-renders
+
+# desktop app build artifacts
+/desktop/node_modules
+/desktop/dist
+
+# engine service artifacts
+/engines/musetalk-service/models
+/engines/musetalk-service/__pycache__
+/engines/wav2lip-service/__pycache__
+/engines/wav2lip-service/venv
+/engines/wav2lip-service/Wav2Lip
+/engines/wav2lip-service/jobs
+

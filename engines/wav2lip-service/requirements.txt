@@ -1,0 +1,9 @@
+# Deps for THIS service (the FastAPI wrapper) only.
+#
+# Wav2Lip's own inference dependencies (torch, opencv, librosa, numba, etc.)
+# are installed separately by setup.bat into the shared venv, alongside the
+# cloned Wav2Lip repo — they do not belong in this file.
+fastapi
+uvicorn[standard]
+httpx
+pydantic
