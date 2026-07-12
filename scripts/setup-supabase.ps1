@@ -1,16 +1,19 @@
 <#
-  WatchDeck — one-shot Supabase provisioning for Windows / PowerShell.
+  WatchDeck - one-shot Supabase provisioning for Windows / PowerShell.
 
   Creates (or reuses) a Supabase project via the Management API, waits for it
-  to become healthy, applies supabase/migrations/0001_init.sql, enables
-  email auto-confirm, then writes .env.local (UTF-8, no BOM) with the URL +
-  anon + service_role keys.
+  to become healthy, applies supabase/migrations/0001_init.sql, enables email
+  auto-confirm, then writes .env.local (UTF-8, no BOM) with the URL + anon +
+  service_role keys.
 
   Usage (from the repo root):
     powershell -ExecutionPolicy Bypass -File .\scripts\setup-supabase.ps1 -Token "sbp_xxx"
 
-  The token is only ever used in request headers — it is never written to disk.
+  The token is only ever used in request headers - it is never written to disk.
   Rotate it in the Supabase dashboard once setup succeeds.
+
+  NOTE: this file is intentionally pure ASCII so Windows PowerShell 5.1 parses
+  it correctly even without a UTF-8 BOM.
 #>
 [CmdletBinding()]
 param(
@@ -104,7 +107,7 @@ for ($i = 1; $i -le 6 -and -not $applied; $i++) {
   }
 }
 if (-not $applied) {
-  Write-Host "    !! migration did not apply — paste supabase\migrations\0001_init.sql into the SQL editor manually" -ForegroundColor Yellow
+  Write-Host "    WARNING: migration did not apply - paste supabase\migrations\0001_init.sql into the SQL editor manually" -ForegroundColor Yellow
 }
 
 Write-Host "==> Fetching API keys..."
@@ -119,7 +122,7 @@ $lines = @(
   "SUPABASE_SERVICE_ROLE_KEY=$service",
   "TRANSCRIPT_TMP_DIR=./tmp/watchdeck-transcripts"
 )
-# WriteAllText => UTF-8 without BOM (a BOM would corrupt the first env var name).
+# WriteAllText writes UTF-8 without a BOM (a BOM would corrupt the first var name).
 [IO.File]::WriteAllText($envPath, ($lines -join "`n") + "`n")
 
 Write-Host ""
