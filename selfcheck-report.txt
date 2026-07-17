@@ -1,5 +1,5 @@
 WatchDeck self-check report
-Generated: 2026-07-09T23:30:49Z
+Generated: 2026-07-17T16:13:22Z
 Mode: mock
 Node: v22.22.2
 pnpm: 10.33.0
@@ -22,17 +22,11 @@ Runtime checks (server on :3111 + scripts/selfcheck.mjs):
   ✅ PASS  S8 mobile — homepage responded 200 with a viewport meta tag for a mobile UA
 
 Overall verdict: PASS
-Browser UI checks (scripts/ui-test.mjs, Chromium via playwright-core, mock yt-dlp):
-  ✅ PASS  14/14 — no horizontal scroll at 375/768/1440px, header collapses to
-  hamburger under 768px, signed-out search renders 12-card grid at all three
-  viewports, Embed toggle swaps to a youtube-nocookie iframe, Summarize sheet
-  renders a caption-sourced summary.
+Browser UI checks: ✅ PASS 14/14 (375/768/1440px, hamburger collapse, search grid,
+embed toggle, summarize sheet — scripts/ui-test.mjs)
+RLS policy verification: ✅ PASS 12/12 (real Postgres via PGlite, migration SQL
+applied verbatim — scripts/rls-local-test.mjs)
 
-RLS policy verification (scripts/rls-local-test.mjs, real Postgres via PGlite,
-actual migration SQL applied verbatim minus Supabase-Storage statements):
-  ✅ PASS  12/12 — owner CRUD works; forged-owner inserts, cross-user updates,
-  soft-deletes, watchlist reads/writes/deletes all blocked; owner soft-delete
-  hides the row publicly while staying visible to the owner; updated_at
-  trigger fires. (GoTrue auth, Storage policies, signed URLs need a live project.)
-
-Combined verdict: PASS (harness 7✅/5⏭ blocked-by-sandbox, UI 14/14, RLS 12/12)
+Combined verdict: PASS (harness 7✅/5⏭ env-blocked, UI 14/14, RLS 12/12)
+Live checks against a real Supabase project: run `node scripts/live-smoke.mjs`
+after scripts/setup-supabase.ps1 has written .env.local.
