@@ -30,3 +30,12 @@ applied verbatim — scripts/rls-local-test.mjs)
 Combined verdict: PASS (harness 7✅/5⏭ env-blocked, UI 14/14, RLS 12/12)
 Live checks against a real Supabase project: run `node scripts/live-smoke.mjs`
 after scripts/setup-supabase.ps1 has written .env.local.
+
+Live verification (run by the operator on Windows against project
+ooudxpwvdqhepueihzlw, 2026-07-17, scripts/live-smoke.mjs): 14/14 PASS —
+migration applied+verified via scripts/apply-migration.mjs; GoTrue signup/
+signin; owner insert + public read; cross-user update/soft-delete blocked;
+watchlist isolation (read/insert/delete); storage upload + signed-URL fetch;
+cross-user storage upload denied; owner soft-delete hides row.
+
+FINAL verdict: PASS — all previously environment-blocked checks now verified live.
