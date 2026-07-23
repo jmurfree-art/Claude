@@ -1,0 +1,38 @@
+{
+  "title": "The Quiet Change — 20s Invisalign spot, Murfree Dental",
+  "format": {"width": 704, "height": 1280, "fps": 24, "frames_per_shot": 121, "note": "Vertical 9:16 for Reels/TikTok. For landscape use 1280x704."},
+  "voiceover": {
+    "script": "Some changes announce themselves. Yours doesn't have to. Invisalign clear aligners — designed by Dr. Murfree with three-D precision, and worn through real life: meetings, dinners, everything between. Until one day you catch your reflection... and there it is. Murfree Dental, Murfreesboro. murfree dental dot com.",
+    "timing": "0-3s hook / 3-12s body over shots 2-3 / 12-17s reveal / 17-20s brand over endcard",
+    "note": "Record with a warm-voiced team member, or ~1 Higgsfield credit for a Maya take. Music: minimal warm piano + light strings, ducked under VO."
+  },
+  "negative_prompt": "garish colors, overexposed, static image, blurry details, subtitles, on-screen text, watermark, logo, painting, illustration, gray flat tone, worst quality, deformed hands, extra fingers, distorted teeth, extra teeth, uncanny face, lip-sync",
+  "character_note": "All four shots describe the same woman for continuity. Identity drift across separate generations is a known limitation — if drift is visible, either re-roll seeds, or switch to the 'four patients' variant by changing the subject description per shot (the ad reads equally well as four different patients).",
+  "shots": [
+    {
+      "id": "shot1_morning_mirror",
+      "seconds": "0-5",
+      "beat": "Product mechanic — aligner in, day begins",
+      "prompt": "Cinematic commercial, photoreal film quality. Soft dawn light in a modern bathroom, gentle window glow, soft teal and warm coral accents. A woman in her late twenties with shoulder-length dark hair, wearing a soft teal top, leans toward the mirror and gently seats a clear dental aligner onto her upper teeth with one practiced motion, then studies her reflection with a growing half-smile. Shallow depth of field, warm natural skin tones, realistic natural teeth. Camera: slow push-in over her shoulder toward the mirror reflection."
+    },
+    {
+      "id": "shot2_meeting",
+      "seconds": "5-10",
+      "beat": "Discretion — nobody notices",
+      "prompt": "Cinematic commercial, photoreal film quality. Bright glass-walled meeting room in late-morning sun, soft teal and warm coral accents in the decor. A woman in her late twenties with shoulder-length dark hair, wearing a soft teal blouse, stands presenting to colleagues and laughs naturally mid-gesture, completely at ease, natural realistic smile. Colleagues in soft focus. Camera: slow lateral dolly gliding past the glass wall into the room."
+    },
+    {
+      "id": "shot3_dinner",
+      "seconds": "10-15",
+      "beat": "Lifestyle — aligners out at dinner",
+      "prompt": "Cinematic commercial, photoreal film quality. Golden-hour dinner on a warm restaurant patio, string-light bokeh, teal napkins and coral flowers on the table. A woman in her late twenties with shoulder-length dark hair laughs with two friends and reaches for a shared dish; beside her plate a small closed clear aligner case catches the warm light. Camera: slow arc around the table ending on her relaxed genuine smile."
+    },
+    {
+      "id": "shot4_reflection",
+      "seconds": "15-20",
+      "beat": "Reveal — the quiet change, then endcard",
+      "prompt": "Cinematic commercial, photoreal film quality. Dusk on a charming small-town main street with warm shop-window light and soft lens flare. A woman in her late twenties with shoulder-length dark hair pauses at a shop window, catches her own reflection, and breaks into a genuine confident smile, realistic natural teeth. Camera: slow push-in from behind her shoulder to her reflected smile.",
+      "post": "Cut to endcard.png for the final ~2s during the brand line (add in edit)."
+    }
+  ]
+}
