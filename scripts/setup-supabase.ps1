@@ -73,10 +73,31 @@ $ref = $proj.id
 if (-not $ref) { Fail "could not determine project ref" }
 
 Write-Host "==> Waiting for ACTIVE_HEALTHY (a few minutes on a fresh project)..."
+$restoreTried = $false
+$waited = 0
 do {
   Start-Sleep -Seconds 15
+  $waited += 15
   $p = Invoke-Sb GET "/v1/projects/$ref" $null
   Write-Host "    status: $($p.status)"
+
+  # Free-tier projects get paused after inactivity and never wake on their
+  # own - ask the API to restore, once, instead of polling forever.
+  if ($p.status -match "INACTIVE|PAUSED" -and -not $restoreTried) {
+    $restoreTried = $true
+    Write-Host "    project is paused - requesting restore..."
+    try {
+      Invoke-Sb POST "/v1/projects/$ref/restore" "{}" | Out-Null
+      Write-Host "    restore requested (this can take a few minutes)"
+    } catch {
+      Write-Host "    restore request failed: $($_.Exception.Message)" -ForegroundColor Yellow
+      Write-Host "    Restore it manually: https://supabase.com/dashboard/project/$ref" -ForegroundColor Yellow
+    }
+  }
+
+  if ($waited -ge 600) {
+    Fail "project did not reach ACTIVE_HEALTHY within 10 minutes (last status: $($p.status)). Check https://supabase.com/dashboard/project/$ref"
+  }
 } until ($p.status -eq "ACTIVE_HEALTHY")
 
 Write-Host "==> Enabling email auto-confirm..."
