@@ -149,6 +149,13 @@ Authored in this repository, on `main` since 2026-11-12:
 
 - [2026-07-08] - `/dental-content` — on-brand Murfree Dental writing: verified vs. confirm-first practice facts, services taxonomy and URL patterns, voice rules, local-SEO defaults, per-content-type recipes, compliance guardrails. Unverifiable facts carry `[CONFIRM: …]` markers.
 - [2026-07-08] - `/practice-video` — patient-education and marketing video via the Higgsfield explainer workflow, with a Murfree brand layer, credit hygiene, consent gates, and a 60-second Invisalign example script.
+- [2026-11-12] - `/ad-engine` — paid-ad creative as a scored batch (not yet on
+  `main`; on branch `claude/intelligent-gauss-8n2iyz`). Carries an environment
+  audit (this account has tools and composition, but no ads data and no publish
+  access), the hard rules for synthetic people in dental advertising, a
+  concepts-before-pixels static workflow, the three-input lock for video models,
+  a pre-human scoring rubric, and parameter-level provenance. Source notes for
+  the techniques live in `references/source-masterclass.md` beside it.
 - [2026-07-08] - Vendored UI skills: `baseline-ui`, `frontend-design`, `fixing-accessibility`, `fixing-metadata`, `fixing-motion-performance`, pinned by `skills-lock.json` and mirrored under `.agents/skills/`.
 
 - [2026-11-12] - No plugins are enabled at the claude.ai account level. Plugin
