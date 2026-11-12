@@ -8,10 +8,10 @@ Format: one entry per line, `[YYYY-MM-DD] - entry`, oldest first within each
 section. `[unknown]` where no date is available. Entries marked **(inferred)**
 are deductions, not stated facts — correct them.
 
-Assembled 2026-11-12, then extended with practice facts from the
-`dental-content` skill once PR #3 merged and made it readable. Additive by
-design: this file records facts and does not issue instructions. Standing
-instructions are in `CLAUDE.md`.
+Assembled 2026-11-12, extended with practice facts from the `dental-content`
+skill once PR #3 merged and made it readable, then with identity confirmed by
+the account owner. Additive by design: this file records facts and does not
+issue instructions. Standing instructions are in `CLAUDE.md`.
 
 > **This repository is public.** Anything committed here is world-readable. No
 > credentials, health data, financial figures, account numbers, addresses, or
@@ -60,26 +60,32 @@ autonomous runs. Confirm before treating as rules.
 - [unknown] - Based in Murfreesboro, Tennessee (Rutherford County, Middle
   Tennessee). Works in US Central Time — confirmed by the location, not just by
   the "Mon 7am CT" scheduled task it was first guessed from.
-- [unknown] - The practice's dentist is **Dr. John Murfree, DDS**, recorded as a
-  verified practice fact in `.claude/skills/dental-content/SKILL.md`. The
-  `jmurfree-art` and `juanmurf` handles are consistent with this being the
-  account owner, but no repository content states that outright.
-  **(inferred** identification.**)**
+- [2026-11-12] - The account owner is **Dr. John P. Murfree, DDS** — the dentist
+  at Murfree Dental, confirmed by him directly. In practice copy he is referred
+  to in the third person as "Dr. Murfree", per the `dental-content` skill.
 - [unknown] - Has a Windows machine running ComfyUI locally, used for generative
   media work, and reaches Claude from desktop, web, and iOS.
 
 ## Career
 
-- [unknown] - Works on **Murfree Dental** — a family-based general and cosmetic
-  dental practice at 1140 Dow St, Murfreesboro, TN 37130, (615) 893-1770,
-  murfreedental.com. Positioning: "a family-based office dedicated to providing
-  high-quality dental care in a friendly, comfortable environment." Work spans
-  content writing, local SEO, patient-education and marketing video, and
-  practice finances.
+- [unknown] - Practising dentist at **Murfree Dental** — a family-based general
+  and cosmetic dental practice at 1140 Dow St, Murfreesboro, TN 37130,
+  (615) 893-1770, murfreedental.com. Positioning: "a family-based office
+  dedicated to providing high-quality dental care in a friendly, comfortable
+  environment." Runs the practice's own marketing and back office alongside
+  clinical work: content writing, local SEO, patient-education and marketing
+  video, and practice finances.
+- [unknown] - Credentials: DDS, University of Tennessee College of Dentistry.
+  Fellowship, Master's and Diplomate in implant training and grafting
+  (International Dental Implant Association); Associate Fellowship in dental
+  lasers (World Clinical Laser Institute); certified in Invisalign and oral
+  conscious sedation. Member of the ADA, Tennessee Dental Association, American
+  Academy of Cosmetic Dentistry, IDIA, DOCS and the Academy of General
+  Dentistry. Born and raised in Murfreesboro.
 - [unknown] - The practice's differentiators, as encoded for content work:
   implant credentials (IDIA Fellowship, Master's, Diplomate), laser dentistry,
-  cone beam 3D imaging, platelet-rich fibrin, oral conscious sedation, and a
-  hometown doctor born and raised in Murfreesboro. Services are organized as
+  cone beam 3D imaging, platelet-rich fibrin, oral conscious sedation, and the
+  hometown-doctor angle. Services are organized as
   cosmetic, restorative, general, sedation, emergency, and dental technology,
   with site links following `/services/<category>/<service>/`.
 - [unknown] - Local SEO targets, in order: Murfreesboro TN, then Rutherford
